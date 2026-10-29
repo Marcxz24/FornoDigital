@@ -1,0 +1,77 @@
+# ==========================================
+# Visual Studio / IDE
+# ==========================================
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# ==========================================
+# .NET / C#
+# ==========================================
+[Bb]in/
+[Oo]bj/
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+artifacts/
+TestResults/
+*.cache
+*.pdb
+*.dll
+*.exe
+
+# ==========================================
+# NuGet
+# ==========================================
+*.nupkg
+*.snupkg
+.nuget/
+
+# ==========================================
+# Configurações locais e segredos
+# ==========================================
+**/appsettings.json
+**/appsettings.*.json
+!**/appsettings.example.json
+secrets.json
+.env
+.env.*
+!.env.example
+
+# ==========================================
+# Banco de dados SQLite local
+# ==========================================
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+
+# ==========================================
+# Logs e arquivos temporários
+# ==========================================
+*.log
+logs/
+temp/
+tmp/
+
+# ==========================================
+# Sistema operacional
+# ==========================================
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ==========================================
+# Frontend React / Node.js
+# ==========================================
+node_modules/
+dist/
+build/
+coverage/
+.npm/
