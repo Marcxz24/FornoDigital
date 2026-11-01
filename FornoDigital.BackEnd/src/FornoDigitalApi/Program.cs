@@ -11,6 +11,7 @@ using FornoDigitalInfrastructure.Repositories.Clientes;
 
 // Usando reflection para carregar assemblies, se necessário.
 using System.Reflection;
+using FornoDigitalApplication.Clientes.EditarCliente;
 
 // Cria o construtor da aplicação Web e carrega configurações,
 // serviços e variáveis de ambiente.
@@ -39,9 +40,11 @@ builder.Services.AddSwaggerGen(options =>
     var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
     options.IncludeXmlComments(xmlPath);
 });
+
 // Registra o repositório de clientes e o handler de cadastro de clientes
 builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 builder.Services.AddScoped<CadastrarClienteHandler>();
+builder.Services.AddScoped<EditarClienteHandler>();
 
 // Constrói a aplicação com os serviços configurados.
 var app = builder.Build();
