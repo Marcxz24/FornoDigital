@@ -69,21 +69,61 @@ namespace FornoDigitalDomain.Entities.Clientes
         }
 
         /// <summary>
-        /// Inicializa uma nova instância da classe <see cref="Cliente"/> exigindo um nome válido.
+        /// Inicializa uma nova instância da classe <see cref="Cliente"/> com seus dados obrigatórios e opcionais.
+        /// Executa validações de preenchimento para nome e telefone, e normaliza os campos opcionais.
         /// </summary>
         /// <param name="nome">Nome completo obrigatório do cliente.</param>
-        /// <exception cref="ArgumentException">Lançado se o nome for nulo, vazio ou composto apenas por espaços em branco.</exception>
-        public Cliente(string nome)
+        /// <param name="telefone">Número de telefone ou WhatsApp obrigatório do cliente.</param>
+        /// <param name="cpf">Número do CPF para identificação fiscal (opcional).</param>
+        /// <param name="email">Endereço de e-mail de contato (opcional).</param>
+        /// <param name="endereco">Logradouro do endereço (opcional).</param>
+        /// <param name="bairro">Bairro do endereço (opcional).</param>
+        /// <param name="numeroCasa">Número da residência ou imóvel (opcional).</param>
+        /// <param name="cidade">Cidade de residência (opcional).</param>
+        /// <param name="estado">Sigla do estado UF, convertida automaticamente para maiúsculas (opcional).</param>
+        /// <exception cref="ArgumentException">
+        /// Lançado se o <paramref name="nome"/> ou o <paramref name="telefone"/> forem nulos, vazios ou compostos apenas por espaços em branco.
+        /// </exception>
+        public Cliente(
+            string nome,
+            string telefone,
+            string? cpf = null,
+            string? email = null,
+            string? endereco = null,
+            string? bairro = null,
+            string? numeroCasa = null,
+            string? cidade = null,
+            string? estado = null)
         {
             if (string.IsNullOrWhiteSpace(nome))
-            {
                 throw new ArgumentException(
                     "O nome do cliente é obrigatório.",
                     nameof(nome));
-            }
+
+            if (string.IsNullOrWhiteSpace(telefone))
+                throw new ArgumentException(
+                    "O telefone do cliente é obrigatório.",
+                    nameof(telefone));
 
             Nome = nome.Trim();
+            Telefone = telefone.Trim();
+            Cpf = NormalizarOpcional(cpf);
+            Email = NormalizarOpcional(email);
+            Endereco = NormalizarOpcional(endereco);
+            Bairro = NormalizarOpcional(bairro);
+            NumeroCasa = NormalizarOpcional(numeroCasa);
+            Cidade = NormalizarOpcional(cidade);
+            Estado = NormalizarOpcional(estado)?.ToUpperInvariant();
         }
+
+        /// <summary>
+        /// Método auxiliar privado que remove espaços em branco redundantes de uma string opcional 
+        /// e retorna <c>null</c> caso o valor seja nulo ou esteja vazio.
+        /// </summary>
+        /// <param name="valor">A string a ser normalizada.</param>
+        /// <returns>A string tratada com <c>Trim()</c> ou <c>null</c> se o input for inválido/vazio.</returns>
+        private static string? NormalizarOpcional(string? valor) =>
+            string.IsNullOrWhiteSpace(valor) ? null : valor.Trim();
 
         /// <summary>
         /// Altera o nome do cliente aplicando validação de preenchimento obrigatório e registra a data da atualização.

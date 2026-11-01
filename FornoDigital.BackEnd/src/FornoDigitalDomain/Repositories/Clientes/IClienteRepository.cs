@@ -26,6 +26,20 @@ namespace FornoDigitalDomain.Repositories.Clientes
         Task<Cliente?> ObterPorCpfAsync(string cpf);
 
         /// <summary>
+        /// Busca assincronamente um cliente com base no E-mail.
+        /// </summary>
+        /// <param name="email"></param>
+        /// <returns></returns>
+        Task<Cliente?> ObterPorEmailAsync(string email);
+
+        /// <summary>
+        /// Busca assincronamente um cliente com base no telefone.
+        /// </summary>
+        /// <param name="telefone"></param>
+        /// <returns></returns>
+        Task<Cliente?> ObterPorTelefoneAsync(string telefone);
+
+        /// <summary>
         /// Recupera assincronamente uma lista somente leitura com todos os clientes cadastrados no sistema.
         /// </summary>
         /// <returns>Uma tarefa que retorna uma coleção de leitura otimizada contendo todos os clientes.</returns>
