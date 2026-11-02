@@ -66,5 +66,12 @@ namespace FornoDigitalDomain.Repositories.Clientes
         /// <param name="cpf">O número do CPF a ser verificado.</param>
         /// <returns>Uma tarefa que retorna <c>true</c> se o CPF já estiver cadastrado, ou <c>false</c> caso contrário.</returns>
         Task<bool> ExisteCpfAsync(string cpf);
+
+        /// <summary>
+        /// Remove de forma assíncrona o registro do cliente informado do contexto de persistência do banco de dados.
+        /// </summary>
+        /// <param name="cliente">A instância da entidade <see cref="Cliente"/> que será excluída.</param>
+        /// <returns>Uma tarefa que representa a operação assíncrona de remoção e salvamento das alterações.</returns>
+        Task RemoverAsync(Cliente cliente);
     }
 }

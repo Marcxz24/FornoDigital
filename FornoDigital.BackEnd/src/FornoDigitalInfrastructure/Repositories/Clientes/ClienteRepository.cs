@@ -95,5 +95,17 @@ namespace FornoDigitalInfrastructure.Repositories.Clientes
         /// <returns>Uma tarefa que retorna <c>true</c> se o CPF já estiver cadastrado, ou <c>false</c> caso contrário.</returns>
         public Task<bool> ExisteCpfAsync(string cpf) =>
             _context.Clientes.AnyAsync(c => c.Cpf == cpf);
+
+        /// <summary>
+        /// Remove de forma assíncrona um cliente existente do contexto de persistência 
+        /// e grava as alterações imediatamente no banco de dados SQLite.
+        /// </summary>
+        /// <param name="cliente">A instância da entidade <see cref="Cliente"/> que será removida.</param>
+        /// <returns>Uma tarefa que representa a operação assíncrona de remoção e salvamento.</returns>
+        public async Task RemoverAsync(Cliente cliente)
+        {
+            _context.Clientes.Remove(cliente);
+            await _context.SaveChangesAsync();
+        }
     }
 }

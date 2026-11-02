@@ -1,6 +1,7 @@
 ﻿using FornoDigitalApi.Contracts.Clientes;
 using FornoDigitalApplication.Clientes.CadastrarCliente;
 using FornoDigitalApplication.Clientes.EditarCliente;
+using FornoDigitalApplication.Clientes.ExcluirCliente;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FornoDigitalApi.Controllers.Clientes
@@ -21,6 +22,9 @@ namespace FornoDigitalApi.Controllers.Clientes
         // Dependencia do EditarClienteHandler, que é injetada pelo construtor
         private readonly EditarClienteHandler _editarClienteHandler;
 
+        // Dependencia do ExcluirClienteHandler, que é injetada pelo construtor
+        private readonly ExcluirClienteHandler _excluirClienteHandler;
+
 
         /// <summary>
         /// Inicializa o controller de clientes.
@@ -31,10 +35,14 @@ namespace FornoDigitalApi.Controllers.Clientes
         /// <param name="editarClienteHandler">
         /// Caso de uso responsável por editar um cliente.
         /// </param>
-        public ClientesController(CadastrarClienteHandler cadastrarClienteHandler, EditarClienteHandler editarClienteHandler)
+        /// <param name="excluirClienteHandler">
+        /// Caso de uso responsável por excluir um cliente.
+        /// </param>
+        public ClientesController(CadastrarClienteHandler cadastrarClienteHandler, EditarClienteHandler editarClienteHandler, ExcluirClienteHandler excluirClienteHandler)
         {
             _cadastrarClienteHandler = cadastrarClienteHandler;
             _editarClienteHandler = editarClienteHandler;
+            _excluirClienteHandler = excluirClienteHandler;
         }
 
         /// <summary>
@@ -135,6 +143,30 @@ namespace FornoDigitalApi.Controllers.Clientes
             );
 
             return Ok(response);
+        }
+
+        /// <summary>
+        /// Exclui definitivamente um cliente.
+        /// </summary>
+        /// <remarks>
+        /// Remove do banco o cliente identificado pelo ID da rota.
+        /// </remarks>
+        /// <param name="id">Identificador do cliente a excluir.</param>
+        /// <response code="204">Cliente excluído.</response>
+        /// <response code="404">Cliente não encontrado.</response>
+        [HttpDelete("{id:guid}/excluir")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> ExcluirCliente([FromRoute] Guid id)
+        {
+            var command = new ExcluirClienteCommand(id);
+
+            var excluido = await _excluirClienteHandler.ExcluirAsync(command);
+
+            if (!excluido)
+                return NotFound();
+
+            return NoContent();
         }
     }
 }
