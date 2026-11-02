@@ -13,6 +13,7 @@ using FornoDigitalInfrastructure.Repositories.Clientes;
 using System.Reflection;
 using FornoDigitalApplication.Clientes.EditarCliente;
 using FornoDigitalApplication.Clientes.ExcluirCliente;
+using FornoDigitalApplication.Clientes.ListarCliente;
 
 // Cria o construtor da aplicação Web e carrega configurações,
 // serviços e variáveis de ambiente.
@@ -47,6 +48,7 @@ builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 builder.Services.AddScoped<CadastrarClienteHandler>();
 builder.Services.AddScoped<EditarClienteHandler>();
 builder.Services.AddScoped<ExcluirClienteHandler>();
+builder.Services.AddScoped<ListarClientesHandler>();
 
 // Constrói a aplicação com os serviços configurados.
 var app = builder.Build();

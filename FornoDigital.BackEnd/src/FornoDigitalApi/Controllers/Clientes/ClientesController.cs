@@ -1,5 +1,6 @@
 ﻿using FornoDigitalApi.Contracts.Clientes;
 using FornoDigitalApplication.Clientes.CadastrarCliente;
+using FornoDigitalApplication.Clientes.ListarCliente;
 using FornoDigitalApplication.Clientes.EditarCliente;
 using FornoDigitalApplication.Clientes.ExcluirCliente;
 using Microsoft.AspNetCore.Mvc;
@@ -25,6 +26,9 @@ namespace FornoDigitalApi.Controllers.Clientes
         // Dependencia do ExcluirClienteHandler, que é injetada pelo construtor
         private readonly ExcluirClienteHandler _excluirClienteHandler;
 
+        // Dependencia do ListarClientesHandler, que é injetada pelo construtor
+        private readonly ListarClientesHandler _listarClientesHandler;
+
 
         /// <summary>
         /// Inicializa o controller de clientes.
@@ -38,11 +42,19 @@ namespace FornoDigitalApi.Controllers.Clientes
         /// <param name="excluirClienteHandler">
         /// Caso de uso responsável por excluir um cliente.
         /// </param>
-        public ClientesController(CadastrarClienteHandler cadastrarClienteHandler, EditarClienteHandler editarClienteHandler, ExcluirClienteHandler excluirClienteHandler)
+        /// <param name="listarClientesHandler">
+        /// Caso de uso responsável por listar os clientes.
+        /// </param>
+        public ClientesController(
+            CadastrarClienteHandler cadastrarClienteHandler, 
+            EditarClienteHandler editarClienteHandler, 
+            ExcluirClienteHandler excluirClienteHandler, 
+            ListarClientesHandler listarClientesHandler)
         {
             _cadastrarClienteHandler = cadastrarClienteHandler;
             _editarClienteHandler = editarClienteHandler;
             _excluirClienteHandler = excluirClienteHandler;
+            _listarClientesHandler = listarClientesHandler;
         }
 
         /// <summary>
@@ -88,6 +100,38 @@ namespace FornoDigitalApi.Controllers.Clientes
             );
 
             return StatusCode(StatusCodes.Status201Created, response);
+        }
+
+        /// <summary>
+        /// Lista os clientes cadastrados.
+        /// </summary>
+        /// <remarks>
+        /// Retorna uma coleção vazia quando ainda não há clientes.
+        /// </remarks>
+        [HttpGet("listar")]
+        [ProducesResponseType(typeof(IReadOnlyList<ClienteResponse>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<IReadOnlyList<ClienteResponse>>> ListarClientes()
+        {
+            var query = new ListarClientesQuery();
+            var clientes = await _listarClientesHandler.ListarAsync(query);
+
+            var response = clientes
+                .Select(cliente => new ClienteResponse(
+                    Id: cliente.Id,
+                    Nome: cliente.Nome,
+                    Cpf: cliente.Cpf,
+                    Email: cliente.Email,
+                    Telefone: cliente.Telefone,
+                    Endereco: cliente.Endereco,
+                    Bairro: cliente.Bairro,
+                    NumeroCasa: cliente.NumeroCasa,
+                    Cidade: cliente.Cidade,
+                    Estado: cliente.Estado,
+                    DataCadastro: cliente.DataCriacao,
+                    DataAtualizacao: cliente.DataAtualizacao))
+                .ToList();
+
+            return Ok(response);
         }
 
         /// <summary>
