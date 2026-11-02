@@ -1,9 +1,8 @@
-﻿using FornoDigitalInfrastructure.Configurations.Clientes;
-using FornoDigitalDomain.Entities.Clientes;
+﻿using FornoDigitalDomain.Entities.Clientes;
+using FornoDigitalDomain.Entities.Produtos;
+using FornoDigitalInfrastructure.Configurations.Clientes;
+using FornoDigitalInfrastructure.Configurations.Produtos;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace FornoDigitalInfrastructure.Data
 {
@@ -24,11 +23,17 @@ namespace FornoDigitalInfrastructure.Data
             base.OnModelCreating(modelBuilder);
 
             modelBuilder.ApplyConfiguration(new ClienteConfiguration());
+            modelBuilder.ApplyConfiguration(new ProdutoConfiguration());
         }
 
         /// <summary>
         /// Representa a coleção de clientes armazenados no banco de dados.
         /// </summary>
         public DbSet<Cliente> Clientes => Set<Cliente>();
+
+        /// <summary>
+        /// Representa a coleção de produtos armazenados no banco de dados.
+        /// </summary>
+        public DbSet<Produto> Produtos => Set<Produto>();
     }
 }

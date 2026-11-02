@@ -15,7 +15,7 @@ namespace FornoDigitalApi.Contracts.Clientes
         public string Nome { get; set; } = string.Empty;
 
         /// <summary>
-        /// CPF obrigatório
+        /// CPF Opcional do cliente. Se informado, deve ser válido.
         /// O valor precisa ter 11 digitos
         /// </summary>
         [RegularExpression(@"^\d{11}$", ErrorMessage = "O CPF deve conter 11 dígitos.")]

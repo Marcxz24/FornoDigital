@@ -1,19 +1,20 @@
 // Importa o contexto do banco de dados do projeto.
-using FornoDigitalInfrastructure.Data;
-
-// Importa os recursos do Entity Framework Core.
-using Microsoft.EntityFrameworkCore;
-
 // Importa os namespaces dos serviços e repositórios do projeto.
 using FornoDigitalApplication.Clientes.CadastrarCliente;
-using FornoDigitalDomain.Repositories.Clientes;
-using FornoDigitalInfrastructure.Repositories.Clientes;
-
-// Usando reflection para carregar assemblies, se necessário.
-using System.Reflection;
 using FornoDigitalApplication.Clientes.EditarCliente;
 using FornoDigitalApplication.Clientes.ExcluirCliente;
 using FornoDigitalApplication.Clientes.ListarCliente;
+using FornoDigitalApplication.Produtos.CadastrarProduto;
+using FornoDigitalApplication.Produtos.ListarProdutos;
+using FornoDigitalDomain.Repositories.Clientes;
+using FornoDigitalDomain.Repositories.Produtos;
+using FornoDigitalInfrastructure.Data;
+using FornoDigitalInfrastructure.Repositories.Clientes;
+using FornoDigitalInfrastructure.Repositories.Produtos;
+// Importa os recursos do Entity Framework Core.
+using Microsoft.EntityFrameworkCore;
+// Usando reflection para carregar assemblies, se necessário.
+using System.Reflection;
 
 // Cria o construtor da aplicação Web e carrega configurações,
 // serviços e variáveis de ambiente.
@@ -44,11 +45,17 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 // Registra o repositório de clientes e o handler de cadastro de clientes
+// -- Representa todos os serviços relacionados à entidade Cliente.
 builder.Services.AddScoped<IClienteRepository, ClienteRepository>();
 builder.Services.AddScoped<CadastrarClienteHandler>();
 builder.Services.AddScoped<EditarClienteHandler>();
 builder.Services.AddScoped<ExcluirClienteHandler>();
 builder.Services.AddScoped<ListarClientesHandler>();
+
+// -- Representa todos os serviços relacionados à entidade Produto.
+builder.Services.AddScoped<IProdutoRepository, ProdutoRepository>();
+builder.Services.AddScoped<CadastrarProdutoHandler>();
+builder.Services.AddScoped<ListarProdutosHandler>();
 
 // Constrói a aplicação com os serviços configurados.
 var app = builder.Build();

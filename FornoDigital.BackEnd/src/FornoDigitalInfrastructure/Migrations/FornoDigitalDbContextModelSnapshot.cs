@@ -85,6 +85,57 @@ namespace FornoDigitalInfrastructure.Migrations
 
                     b.ToTable("Clientes", (string)null);
                 });
+
+            modelBuilder.Entity("FornoDigitalDomain.Entities.Produtos.Produto", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Id");
+
+                    b.Property<bool>("ControlaEstoque")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("Controla_Estoque");
+
+                    b.Property<DateTime?>("DataAtualizacao")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Data_Atualizacao");
+
+                    b.Property<DateTime>("DataCriacao")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Data_Criacao");
+
+                    b.Property<string>("Descricao")
+                        .HasMaxLength(500)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Descricao");
+
+                    b.Property<bool>("Disponivel")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("Disponivel");
+
+                    b.Property<string>("Nome")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Nome");
+
+                    b.Property<decimal>("Preco")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Preco_Venda");
+
+                    b.Property<decimal?>("QuantidadeEstoque")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Quantidade_Estoque");
+
+                    b.Property<int>("UnidadeMedida")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("Unidade_Medida");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Produtos", (string)null);
+                });
 #pragma warning restore 612, 618
         }
     }
