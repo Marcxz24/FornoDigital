@@ -1,4 +1,5 @@
 ﻿using FornoDigitalDomain.Entities.Produtos;
+using FornoDigitalInfrastructure.Configurations.Converters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -68,11 +69,13 @@ namespace FornoDigitalInfrastructure.Configurations.Produtos
             // Configura a propriedade de auditoria que armazena a data e hora exatas da criação do registro do produto.
             builder.Property(p => p.DataCriacao)
                 .HasColumnName("Data_Criacao")
+                .HasConversion(new UtcDateTimeConverter())
                 .IsRequired();
 
             // Configura a propriedade de auditoria que armazena a data e hora da última alteração nos dados do produto (opcional).
             builder.Property(p => p.DataAtualizacao)
                 .HasColumnName("Data_Atualizacao")
+                .HasConversion(new UtcDateTimeConverter())
                 .IsRequired(false);
 
             // Ignora a propriedade calculada de domínio para que o EF Core não tente mapeá-la como coluna na tabela

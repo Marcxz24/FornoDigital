@@ -1,4 +1,5 @@
 ﻿using FornoDigitalDomain.Entities.Clientes;
+using FornoDigitalInfrastructure.Configurations.Converters;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System;
@@ -85,11 +86,13 @@ namespace FornoDigitalInfrastructure.Configurations.Clientes
             // Configuração da coluna de auditoria para data de criação (obrigatória).
             builder.Property(cliente => cliente.DataCriacao)
                 .HasColumnName("Data_Criacao")
+                .HasConversion(new UtcDateTimeConverter())
                 .IsRequired();
 
             // Configuração da coluna de auditoria para data de última atualização (opcional, preenchida apenas após alterações).
             builder.Property(cliente => cliente.DataAtualizacao)
                 .HasColumnName("Data_Atualizacao")
+                .HasConversion(new UtcDateTimeConverter())
                 .IsRequired(false);
 
             // Cria um índice no banco de dados para acelerar buscas e consultas por CPF.

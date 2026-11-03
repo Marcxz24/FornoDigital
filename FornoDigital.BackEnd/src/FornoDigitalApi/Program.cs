@@ -57,6 +57,18 @@ builder.Services.AddScoped<IProdutoRepository, ProdutoRepository>();
 builder.Services.AddScoped<CadastrarProdutoHandler>();
 builder.Services.AddScoped<ListarProdutosHandler>();
 
+// Cors (Cross-Origin Resource Sharing) é uma política de segurança que permite ou restringe recursos em uma página web sendo solicitados de outro domínio fora do domínio do qual o recurso foi servido. Aqui, estamos configurando uma política CORS para permitir que o frontend local (em http://localhost:5173) acesse a API sem restrições de cabeçalhos ou métodos HTTP.
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("FrontendLocal", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 // Constrói a aplicação com os serviços configurados.
 var app = builder.Build();
 
@@ -73,6 +85,11 @@ if (app.Environment.IsDevelopment())
 
 // Redireciona requisições HTTP para HTTPS.
 app.UseHttpsRedirection();
+
+// Configura a política CORS para permitir que o frontend local acesse a API.
+app.UseHttpsRedirection();
+app.UseCors("FrontendLocal");
+app.UseAuthorization();
 
 // Habilita o middleware de autorização.
 app.UseAuthorization();
