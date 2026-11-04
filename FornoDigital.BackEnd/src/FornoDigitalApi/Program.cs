@@ -11,6 +11,9 @@ using FornoDigitalDomain.Repositories.Produtos;
 using FornoDigitalInfrastructure.Data;
 using FornoDigitalInfrastructure.Repositories.Clientes;
 using FornoDigitalInfrastructure.Repositories.Produtos;
+using FornoDigitalDomain.Repositories.Vendas;
+using FornoDigitalInfrastructure.Repositories.Vendas;
+using FornoDigitalApplication.Vendas.RegistrarVenda;
 // Importa os recursos do Entity Framework Core.
 using Microsoft.EntityFrameworkCore;
 // Usando reflection para carregar assemblies, se necessário.
@@ -56,6 +59,10 @@ builder.Services.AddScoped<ListarClientesHandler>();
 builder.Services.AddScoped<IProdutoRepository, ProdutoRepository>();
 builder.Services.AddScoped<CadastrarProdutoHandler>();
 builder.Services.AddScoped<ListarProdutosHandler>();
+
+// -- Representa todos os serviços relacionados à entidade Venda
+builder.Services.AddScoped<IVendaRepository, VendaRepository>();
+builder.Services.AddScoped<RegistrarVendaHandler>();
 
 // Cors (Cross-Origin Resource Sharing) é uma política de segurança que permite ou restringe recursos em uma página web sendo solicitados de outro domínio fora do domínio do qual o recurso foi servido. Aqui, estamos configurando uma política CORS para permitir que o frontend local (em http://localhost:5173) acesse a API sem restrições de cabeçalhos ou métodos HTTP.
 builder.Services.AddCors(options =>

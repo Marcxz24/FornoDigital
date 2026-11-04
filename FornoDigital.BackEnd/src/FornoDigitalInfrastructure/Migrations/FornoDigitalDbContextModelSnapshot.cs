@@ -120,8 +120,8 @@ namespace FornoDigitalInfrastructure.Migrations
                         .HasColumnType("TEXT")
                         .HasColumnName("Nome");
 
-                    b.Property<decimal>("Preco")
-                        .HasColumnType("TEXT")
+                    b.Property<long>("Preco")
+                        .HasColumnType("INTEGER")
                         .HasColumnName("Preco_Venda");
 
                     b.Property<decimal?>("QuantidadeEstoque")
@@ -135,6 +135,110 @@ namespace FornoDigitalInfrastructure.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Produtos", (string)null);
+                });
+
+            modelBuilder.Entity("FornoDigitalDomain.Entities.Vendas.ItemVenda", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Id");
+
+                    b.Property<DateTime>("DataCriacao")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Data_Criacao");
+
+                    b.Property<string>("NomeProduto")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Nome_Produto");
+
+                    b.Property<long>("PrecoUnitario")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("Preco_Unitario");
+
+                    b.Property<Guid>("ProdutoId")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Produto_Id");
+
+                    b.Property<decimal>("Quantidade")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Quantidade");
+
+                    b.Property<Guid>("VendaId")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Venda_Id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProdutoId");
+
+                    b.HasIndex("VendaId");
+
+                    b.ToTable("Itens_Venda", (string)null);
+                });
+
+            modelBuilder.Entity("FornoDigitalDomain.Entities.Vendas.Venda", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Id");
+
+                    b.Property<Guid?>("ClienteId")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Cliente_Id");
+
+                    b.Property<DateTime>("DataCriacao")
+                        .HasColumnType("TEXT")
+                        .HasColumnName("Data_Criacao");
+
+                    b.Property<long>("Desconto")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("Desconto");
+
+                    b.Property<long>("Subtotal")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("Subtotal");
+
+                    b.Property<long>("Total")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("Total");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClienteId");
+
+                    b.ToTable("Vendas", (string)null);
+                });
+
+            modelBuilder.Entity("FornoDigitalDomain.Entities.Vendas.ItemVenda", b =>
+                {
+                    b.HasOne("FornoDigitalDomain.Entities.Produtos.Produto", null)
+                        .WithMany()
+                        .HasForeignKey("ProdutoId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("FornoDigitalDomain.Entities.Vendas.Venda", null)
+                        .WithMany("Itens")
+                        .HasForeignKey("VendaId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("FornoDigitalDomain.Entities.Vendas.Venda", b =>
+                {
+                    b.HasOne("FornoDigitalDomain.Entities.Clientes.Cliente", null)
+                        .WithMany()
+                        .HasForeignKey("ClienteId")
+                        .OnDelete(DeleteBehavior.SetNull);
+                });
+
+            modelBuilder.Entity("FornoDigitalDomain.Entities.Vendas.Venda", b =>
+                {
+                    b.Navigation("Itens");
                 });
 #pragma warning restore 612, 618
         }

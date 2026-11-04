@@ -43,6 +43,8 @@ namespace FornoDigitalInfrastructure.Configurations.Produtos
             // Configura o preço de venda do produto
             builder.Property(p => p.Preco)
                 .HasColumnName("Preco_Venda")
+                .HasConversion(new DecimalToCentsConverter())
+                .HasColumnType("INTEGER")
                 .IsRequired();
 
             // Configura o status de disponibilidade para comercialização
