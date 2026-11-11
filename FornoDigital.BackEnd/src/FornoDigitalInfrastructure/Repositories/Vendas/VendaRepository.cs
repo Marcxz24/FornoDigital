@@ -1,6 +1,7 @@
 ﻿using FornoDigitalDomain.Entities.Vendas;
 using FornoDigitalDomain.Repositories.Vendas;
 using FornoDigitalInfrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -35,6 +36,25 @@ namespace FornoDigitalInfrastructure.Repositories.Vendas
 
             await _context.Vendas.AddAsync(venda);
             await _context.SaveChangesAsync();
+        }
+
+        /// <inheritdoc />
+        public async Task<Venda?> ObterPorIdAsync(Guid id, CancellationToken cancellationToken = default)
+        {
+            return await _context.Vendas
+                .Include(venda => venda.Itens)
+                .AsNoTracking()
+                .FirstOrDefaultAsync(venda => venda.Id == id, cancellationToken);
+        }
+
+        /// <inheritdoc />
+        public async Task<IReadOnlyList<Venda>> ObterTodasAsync(
+            CancellationToken cancellationToken = default)
+        {
+            return await _context.Vendas
+                .Include(venda => venda.Itens)
+                .AsNoTracking()
+                .ToListAsync(cancellationToken);
         }
     }
 }
