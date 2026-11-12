@@ -3,7 +3,9 @@ import type { ReactNode } from "react";
 export type AppPage =
   | "dashboard"
   | "registrar-venda"
-  | "visualizar-vendas";
+  | "visualizar-vendas"
+  | "cadastrar-cliente"
+  | "listar-clientes";
 
 interface SidebarProps {
   paginaAtiva: AppPage;
@@ -26,7 +28,8 @@ interface NavigationItem {
 }
 
 /**
- * Relação estática contendo os itens de navegação principais do sistema.
+ * Configuração estática das opções da barra lateral.
+ * Cada opção filha aponta para o identificador de página que o App utilizará.
  */
 const navigationItems: NavigationItem[] = [
   {
@@ -68,7 +71,7 @@ const navigationItems: NavigationItem[] = [
   },
   {
     label: "Clientes",
-    href: "#clients-title",
+    href: "#clients",
     icon: (
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="M16 20v-1.5a4 4 0 0 0-4-4H7a4 4 0 0 0-4 4V20" />
@@ -78,6 +81,18 @@ const navigationItems: NavigationItem[] = [
       </svg>
     ),
     active: false,
+    children: [
+      {
+        label: "Cadastrar Cliente",
+        href: "#clients-register",
+        page: "cadastrar-cliente",
+      },
+      {
+        label: "Listar Clientes",
+        href: "#clients-list",
+        page: "listar-clientes",
+      },
+    ],
   },
   {
     label: "Produtos",
@@ -94,12 +109,13 @@ const navigationItems: NavigationItem[] = [
 ];
 
 /**
- * Barra lateral responsável pela navegação entre as seções do sistema.
+ * Renderiza a navegação lateral e marca como ativa a seção ou página selecionada.
+ * Ao clicar em uma opção com página, impede a navegação padrão do link e
+ * comunica o identificador ao App por meio de onNavigate.
  */
 export function Sidebar({ paginaAtiva, onNavigate }: SidebarProps) {
   return (
     <aside className="sidebar" aria-label="Navegação principal">
-      {/* Marca / Logotipo da barra lateral direcionando para o início */}
       <a className="sidebar-brand" href="#" aria-label="Forno Digital, início">
         <span className="sidebar-brand-mark" aria-hidden="true">
           F
@@ -107,7 +123,6 @@ export function Sidebar({ paginaAtiva, onNavigate }: SidebarProps) {
         <span className="sidebar-brand-name">Forno Digital</span>
       </a>
 
-      {/* Lista de navegação principal */}
       <nav className="sidebar-nav" aria-label="Seções do sistema">
         {navigationItems.map((item) => {
           const paginaFilhaAtiva =
@@ -141,7 +156,10 @@ export function Sidebar({ paginaAtiva, onNavigate }: SidebarProps) {
               </a>
 
               {item.children && (
-                <div className="sidebar-subnav" aria-label="Seções de vendas">
+                <div
+                  className="sidebar-subnav"
+                  aria-label={`Seções de ${item.label.toLocaleLowerCase("pt-BR")}`}
+                >
                   {item.children.map((child) => {
                     const filhoAtivo = child.page === paginaAtiva;
 
@@ -169,7 +187,6 @@ export function Sidebar({ paginaAtiva, onNavigate }: SidebarProps) {
         })}
       </nav>
 
-      {/* Rodapé da barra lateral indicando o contexto do painel da padaria */}
       <div className="sidebar-footer">
         <span className="sidebar-footer-mark" aria-hidden="true">
           FD

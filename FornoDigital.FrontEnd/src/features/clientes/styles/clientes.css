@@ -1,0 +1,549 @@
+/* Cabeçalho e área principal de Clientes */
+.clients-page {
+  display: flex;
+  width: min(1440px, 100%);
+  max-width: 1440px;
+  min-width: 0;
+  min-height: 100vh;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 1.25rem;
+  margin: 0 auto;
+  padding: 32px clamp(18px, 4vw, 48px) 48px;
+  box-sizing: border-box;
+}
+
+.clients-page-header {
+  align-items: center;
+}
+
+.client-eyebrow {
+  margin: 0 0 0.35rem;
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.client-section-description,
+.client-form-intro {
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.client-success-message {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--accent-border);
+  border-radius: 0.8rem;
+  background: var(--accent-soft);
+  color: var(--success);
+  font-size: 0.9rem;
+}
+
+/* Botões de ações da funcionalidade */
+.client-primary-button,
+.client-secondary-button,
+.client-danger-button {
+  display: inline-flex;
+  min-height: 2.65rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1rem;
+  border: 1px solid transparent;
+  border-radius: 0.7rem;
+  font: inherit;
+  font-size: 0.88rem;
+  font-weight: 650;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    color 160ms ease,
+    transform 160ms ease;
+}
+
+.client-primary-button {
+  background: var(--accent);
+  color: #fff;
+}
+
+.client-primary-button:hover {
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.client-primary-button > span {
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.client-secondary-button {
+  border-color: var(--border);
+  background: var(--surface-raised);
+  color: var(--text);
+}
+
+.client-secondary-button:hover {
+  border-color: var(--border-strong);
+  background: var(--surface-inset);
+}
+
+.client-danger-button {
+  background: var(--danger);
+  color: #fff;
+}
+
+.client-danger-button:hover {
+  filter: brightness(1.08);
+}
+
+.client-primary-button:disabled,
+.client-secondary-button:disabled,
+.client-danger-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none;
+}
+
+/* Painel e campos do formulário */
+.clients-page > .client-form-panel {
+  padding: 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.client-form-panel > .client-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.client-form {
+  margin: 0;
+}
+
+.client-form > .client-form-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.2rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.client-form .panel-heading,
+.client-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.client-form .panel-heading h2,
+.client-section-heading h2,
+.client-list-section h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.2rem;
+}
+
+.client-form-intro {
+  margin: -0.4rem 0 0;
+}
+
+.client-form-intro span,
+.client-form-field > span:not(.client-field-optional) {
+  color: var(--accent);
+}
+
+.client-form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  padding-top: 1.1rem;
+  border-top: 1px solid var(--border);
+}
+
+.client-form-section h3 {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.96rem;
+}
+
+.client-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.client-form-field {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 0.45rem;
+  color: var(--text-secondary);
+  font-size: 0.83rem;
+  font-weight: 600;
+}
+
+.client-form-field input,
+.client-search-field input {
+  width: 100%;
+  min-height: 2.7rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  outline: none;
+  background: var(--surface-inset);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.9rem;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.client-form-field input:focus,
+.client-search-field input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.client-form-field input[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+
+.client-form-field-wide {
+  grid-column: span 2;
+}
+
+.client-field-optional {
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+.client-field-error,
+.client-form-error {
+  color: var(--danger);
+  font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.client-form-error {
+  margin: 0;
+}
+
+.client-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.7rem;
+  padding-top: 0.3rem;
+}
+
+/* Busca, contagem e cartões da lista */
+.client-list-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.client-count-badge {
+  flex: 0 0 auto;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-raised);
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
+.client-search-field {
+  display: flex;
+  min-height: 2.9rem;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0 0.75rem;
+  border: 1px solid var(--border);
+  border-radius: 0.75rem;
+  background: var(--surface-inset);
+  color: var(--muted);
+}
+
+.client-search-field:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.client-search-field input {
+  min-height: 2.7rem;
+  padding: 0.5rem 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.client-search-field input:focus {
+  border: 0;
+  box-shadow: none;
+}
+
+.client-search-icon {
+  display: inline-flex;
+  width: 1.2rem;
+  height: 1.2rem;
+  flex: 0 0 auto;
+}
+
+.client-search-icon svg,
+.client-icon-button svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+
+.client-cards-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+}
+
+.client-record-card {
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.85rem;
+  background: var(--surface-raised);
+  transition:
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.client-record-card:hover {
+  border-color: var(--border-strong);
+  transform: translateY(-1px);
+}
+
+.client-record-main {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.client-avatar {
+  display: grid;
+  width: 2.7rem;
+  height: 2.7rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--accent-border);
+  border-radius: 0.8rem;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 1rem;
+  font-weight: 750;
+}
+
+.client-record-heading {
+  min-width: 0;
+  flex: 1;
+}
+
+.client-record-heading h3 {
+  overflow: hidden;
+  margin: 0;
+  color: var(--text);
+  font-size: 0.93rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.client-record-heading p {
+  overflow: hidden;
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.client-record-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 0.4rem;
+}
+
+.client-icon-button {
+  display: grid;
+  width: 2.2rem;
+  height: 2.2rem;
+  place-items: center;
+  padding: 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.client-icon-button:hover {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.client-icon-button-danger:hover {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.client-record-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.8rem 1rem;
+  margin: 1rem 0 0;
+  padding-top: 0.9rem;
+  border-top: 1px solid var(--border);
+}
+
+.client-record-details div {
+  min-width: 0;
+}
+
+.client-record-details dt {
+  margin-bottom: 0.25rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.client-record-details dd {
+  overflow-wrap: anywhere;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+}
+
+/* Confirmação modal de exclusão */
+.client-confirmation-backdrop {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgb(0 0 0 / 55%);
+  backdrop-filter: blur(4px);
+}
+
+.client-confirmation-dialog {
+  width: min(100%, 28rem);
+  padding: 1.5rem;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.client-confirmation-icon {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  margin-bottom: 1rem;
+  place-items: center;
+  border: 1px solid var(--danger);
+  border-radius: 50%;
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.client-confirmation-dialog h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.25rem;
+}
+
+.client-confirmation-dialog > p:not(.client-eyebrow, .client-form-error) {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.6;
+}
+
+.client-confirmation-dialog strong {
+  color: var(--text);
+}
+
+.client-confirmation-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.65rem;
+  margin-top: 1.25rem;
+}
+
+/* Ajustes para telas menores */
+@media (max-width: 900px) {
+  .client-cards-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .clients-page-header,
+  .client-form-panel > .client-section-heading,
+  .client-section-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .clients-page-header > .client-primary-button {
+    width: 100%;
+  }
+
+  .client-form-grid,
+  .client-record-details {
+    grid-template-columns: 1fr;
+  }
+
+  .client-form-field-wide {
+    grid-column: auto;
+  }
+
+  .client-form-actions,
+  .client-confirmation-actions {
+    flex-direction: column-reverse;
+  }
+
+  .client-form-actions > button,
+  .client-confirmation-actions > button {
+    width: 100%;
+  }
+    .clients-page {
+    padding: 24px 14px 36px;
+  }
+}

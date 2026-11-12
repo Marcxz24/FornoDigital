@@ -58,7 +58,7 @@ async function getErrorMessage(response: Response): Promise<string> {
 }
 
 /**
- * Faz uma requisição e converte a resposta JSON para o tipo informado.
+ * Faz uma requisição que espera uma resposta JSON.
  */
 async function requestJson<T>(
   path: string,
@@ -71,6 +71,20 @@ async function requestJson<T>(
   }
 
   return (await response.json()) as T;
+}
+
+/**
+ * Faz uma requisição que não espera conteúdo na resposta, como DELETE 204.
+ */
+async function requestNoContent(
+  path: string,
+  options: RequestInit,
+): Promise<void> {
+  const response = await fetch(`${API_BASE_URL}${path}`, options);
+
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response));
+  }
 }
 
 /**
@@ -99,5 +113,34 @@ export function postJson<TRequest, TResponse>(
       "Content-Type": "application/json",
     },
     body: JSON.stringify(body),
+  });
+}
+
+/**
+ * Realiza uma requisição PUT enviando o corpo como JSON e esperando JSON na resposta.
+ */
+export function putJson<TRequest, TResponse>(
+  path: string,
+  body: TRequest,
+): Promise<TResponse> {
+  return requestJson<TResponse>(path, {
+    method: "PUT",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+}
+
+/**
+ * Realiza uma requisição DELETE que não espera corpo na resposta.
+ */
+export function deleteRequest(path: string): Promise<void> {
+  return requestNoContent(path, {
+    method: "DELETE",
+    headers: {
+      Accept: "application/json",
+    },
   });
 }
