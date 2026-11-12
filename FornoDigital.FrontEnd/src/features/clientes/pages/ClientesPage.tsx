@@ -3,7 +3,10 @@ import type { Cliente, ClienteRequest } from "../types/cliente";
 import { useClientesData } from "../hooks/useClientesData";
 import { ClienteForm } from "../components/ClienteForm";
 import { ListaClientes } from "../components/ListaClientes";
-import { ConfirmarExclusaoCliente } from "../components/ConfirmarExclusaoCliente";
+import {
+  confirmarAcao,
+  notificar,
+} from "../../../shared/utils/notificacoes";
 
 type PaginaClientes = "cadastrar-cliente" | "listar-clientes";
 
@@ -13,8 +16,7 @@ interface ClientesPageProps {
 }
 
 /**
- * Coordena a tela de clientes, conectando os dados do hook aos componentes
- * visuais e sincronizando o formulário com a opção ativa da navegação.
+ * Coordena a tela de clientes e conecta o hook aos componentes de apresentação.
  */
 export function ClientesPage({
   paginaAtiva,
@@ -23,8 +25,6 @@ export function ClientesPage({
   const {
     clientes: estadoClientes,
     salvando,
-    excluindoId,
-    erroOperacao,
     cadastrar,
     atualizar,
     remover,
@@ -36,74 +36,91 @@ export function ClientesPage({
   >(paginaAtiva === "cadastrar-cliente" ? "novo" : "fechado");
   const [clienteSelecionado, setClienteSelecionado] =
     useState<Cliente | null>(null);
-  const [clienteParaExcluir, setClienteParaExcluir] =
-    useState<Cliente | null>(null);
-  const [mensagemSucesso, setMensagemSucesso] = useState<string | null>(null);
 
   /**
-   * Abre um formulário de cadastro limpo quando o botão da página é acionado.
+   * Abre um formulário de cadastro vazio.
    */
   function abrirCadastro() {
     setClienteSelecionado(null);
-    setMensagemSucesso(null);
     setModoFormulario("novo");
   }
 
   /**
-   * Seleciona o cliente e abre o formulário preenchido para edição.
+   * Seleciona um cliente e abre o formulário preenchido para edição.
    */
   function abrirEdicao(cliente: Cliente) {
     setClienteSelecionado(cliente);
-    setMensagemSucesso(null);
     setModoFormulario("editar");
   }
 
   /**
-   * Envia os dados ao endpoint apropriado e devolve o cliente retornado pela API.
-   * O formulário usa esse resultado para executar seu callback de sucesso.
-   */
+ * Executa o cadastro ou a edição, notifica falhas da API e devolve
+ * o cliente salvo quando a operação termina com sucesso.
+ */
   async function salvarCliente(request: ClienteRequest): Promise<Cliente> {
-    if (modoFormulario === "editar" && clienteSelecionado) {
-      return atualizar(clienteSelecionado.id, request);
-    }
+    try {
+      if (modoFormulario === "editar" && clienteSelecionado) {
+        return await atualizar(clienteSelecionado.id, request);
+      }
 
-    return cadastrar(request);
+      return await cadastrar(request);
+    } catch (error: unknown) {
+      const mensagem =
+        error instanceof Error
+          ? error.message
+          : "Não foi possível salvar o cliente.";
+
+      void notificar("error", mensagem);
+      throw error;
+    }
   }
 
   /**
-   * Exibe a confirmação de sucesso, fecha o formulário e navega para a listagem.
+   * Notifica o sucesso após a API salvar o cliente e volta à listagem.
    */
   function concluirSalvamento(cliente: Cliente) {
     const acao =
       modoFormulario === "editar" ? "atualizado" : "cadastrado";
 
-    setMensagemSucesso(`Cliente ${cliente.nome} ${acao} com sucesso.`);
+    void notificar("success", `Cliente ${cliente.nome} ${acao} com sucesso.`);
     setModoFormulario("fechado");
     setClienteSelecionado(null);
     onNavigate("listar-clientes");
   }
 
   /**
-   * Solicita a exclusão ao hook e fecha a confirmação somente após sucesso.
-   * Se a API falhar, mantém o diálogo aberto para apresentar o erro.
+   * Pede confirmação e só então chama a API para excluir o cliente.
+   * Se a API falhar, mostra uma notificação de erro com a mensagem recebida.
    */
-  async function confirmarExclusao() {
-    if (!clienteParaExcluir) {
+  async function solicitarExclusao(cliente: Cliente) {
+    const confirmou = await confirmarAcao(
+      "Excluir cliente?",
+      `O cliente ${cliente.nome} será removido permanentemente. Esta ação não poderá ser desfeita.`,
+    );
+
+    if (!confirmou) {
       return;
     }
 
     try {
-      await remover(clienteParaExcluir.id);
-      setMensagemSucesso("Cliente excluído com sucesso.");
-      setClienteParaExcluir(null);
-    } catch {
-      // O hook guarda o erro em erroOperacao para exibição no diálogo.
+      await remover(cliente.id);
+      void notificar(
+        "success",
+        `Cliente ${cliente.nome} excluído com sucesso.`,
+      );
+    } catch (error: unknown) {
+      const mensagem =
+        error instanceof Error
+          ? error.message
+          : "Não foi possível excluir o cliente.";
+
+      void notificar("error", mensagem);
     }
   }
 
   /**
-   * Cancela o formulário. Se ele foi aberto pela opção de cadastro do menu,
-   * navega para a listagem; durante uma edição, apenas fecha o formulário.
+   * Fecha o formulário; se o cadastro foi aberto pelo menu,
+   * retorna à opção de listagem.
    */
   function cancelarFormulario() {
     setModoFormulario("fechado");
@@ -111,15 +128,6 @@ export function ClientesPage({
 
     if (paginaAtiva === "cadastrar-cliente") {
       onNavigate("listar-clientes");
-    }
-  }
-
-  /**
-   * Fecha a confirmação de exclusão apenas quando não há exclusão em andamento.
-   */
-  function cancelarExclusao() {
-    if (!excluindoId) {
-      setClienteParaExcluir(null);
     }
   }
 
@@ -143,12 +151,6 @@ export function ClientesPage({
           Cadastrar cliente
         </button>
       </header>
-
-      {mensagemSucesso && (
-        <p className="client-success-message" role="status">
-          {mensagemSucesso}
-        </p>
-      )}
 
       {modoFormulario !== "fechado" && (
         <section className="client-form-panel">
@@ -177,7 +179,7 @@ export function ClientesPage({
           <ClienteForm
             cliente={modoFormulario === "editar" ? clienteSelecionado : null}
             salvando={salvando}
-            erroApi={erroOperacao}
+            erroApi={null}
             onSubmit={salvarCliente}
             onSuccess={concluirSalvamento}
             onCancel={cancelarFormulario}
@@ -190,22 +192,9 @@ export function ClientesPage({
         carregando={estadoClientes.loading}
         erro={estadoClientes.error}
         onEditar={abrirEdicao}
-        onExcluir={(cliente) => {
-          setMensagemSucesso(null);
-          setClienteParaExcluir(cliente);
-        }}
+        onExcluir={solicitarExclusao}
         onRecarregar={recarregar}
       />
-
-      {clienteParaExcluir && (
-        <ConfirmarExclusaoCliente
-          nomeCliente={clienteParaExcluir.nome}
-          carregando={excluindoId === clienteParaExcluir.id}
-          erro={erroOperacao}
-          onConfirmar={confirmarExclusao}
-          onCancelar={cancelarExclusao}
-        />
-      )}
     </main>
   );
 }

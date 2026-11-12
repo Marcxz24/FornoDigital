@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 export type AppPage =
   | "dashboard"
@@ -28,8 +28,7 @@ interface NavigationItem {
 }
 
 /**
- * Configuração estática das opções da barra lateral.
- * Cada opção filha aponta para o identificador de página que o App utilizará.
+ * Configuração dos itens e subitens que aparecem na navegação lateral.
  */
 const navigationItems: NavigationItem[] = [
   {
@@ -109,11 +108,14 @@ const navigationItems: NavigationItem[] = [
 ];
 
 /**
- * Renderiza a navegação lateral e marca como ativa a seção ou página selecionada.
- * Ao clicar em uma opção com página, impede a navegação padrão do link e
- * comunica o identificador ao App por meio de onNavigate.
+ * Renderiza a navegação lateral e controla a expansão dos grupos.
+ * Os grupos começam recolhidos; selecionar um subitem abre seu grupo.
  */
 export function Sidebar({ paginaAtiva, onNavigate }: SidebarProps) {
+  const [gruposAbertos, setGruposAbertos] = useState<Record<string, boolean>>(
+    {},
+  );
+
   return (
     <aside className="sidebar" aria-label="Navegação principal">
       <a className="sidebar-brand" href="#" aria-label="Forno Digital, início">
@@ -132,30 +134,51 @@ export function Sidebar({ paginaAtiva, onNavigate }: SidebarProps) {
             (item.page !== undefined && item.page === paginaAtiva) ||
             paginaFilhaAtiva;
 
+          const grupoAberto = gruposAbertos[item.label] ?? false;
+
           return (
             <div className="sidebar-nav-group" key={item.label}>
-              <a
-                className={`sidebar-link${ativo ? " sidebar-link-active" : ""}`}
-                href={item.href}
-                aria-current={
-                  item.page === paginaAtiva ? "page" : undefined
-                }
-                onClick={
-                  item.page
-                    ? (event) => {
-                        event.preventDefault();
-                        onNavigate(item.page!);
-                      }
-                    : item.children
-                      ? (event) => event.preventDefault()
+              {item.children ? (
+                <button
+                  className={`sidebar-link sidebar-group-toggle${ativo ? " sidebar-link-active" : ""}`}
+                  type="button"
+                  aria-expanded={grupoAberto}
+                  onClick={() => {
+                    setGruposAbertos((atuais) => ({
+                      ...atuais,
+                      [item.label]: !grupoAberto,
+                    }));
+                  }}
+                >
+                  <span className="sidebar-link-icon">{item.icon}</span>
+                  <span className="sidebar-link-label">{item.label}</span>
+                  <span
+                    className={`sidebar-group-chevron${grupoAberto ? " sidebar-group-chevron-open" : ""}`}
+                    aria-hidden="true"
+                  >
+                    ›
+                  </span>
+                </button>
+              ) : (
+                <a
+                  className={`sidebar-link${ativo ? " sidebar-link-active" : ""}`}
+                  href={item.href}
+                  aria-current={item.page === paginaAtiva ? "page" : undefined}
+                  onClick={
+                    item.page
+                      ? (event) => {
+                          event.preventDefault();
+                          onNavigate(item.page!);
+                        }
                       : undefined
-                }
-              >
-                <span className="sidebar-link-icon">{item.icon}</span>
-                <span className="sidebar-link-label">{item.label}</span>
-              </a>
+                  }
+                >
+                  <span className="sidebar-link-icon">{item.icon}</span>
+                  <span className="sidebar-link-label">{item.label}</span>
+                </a>
+              )}
 
-              {item.children && (
+              {item.children && grupoAberto && (
                 <div
                   className="sidebar-subnav"
                   aria-label={`Seções de ${item.label.toLocaleLowerCase("pt-BR")}`}
@@ -171,6 +194,12 @@ export function Sidebar({ paginaAtiva, onNavigate }: SidebarProps) {
                         aria-current={filhoAtivo ? "page" : undefined}
                         onClick={(event) => {
                           event.preventDefault();
+
+                          setGruposAbertos((atuais) => ({
+                            ...atuais,
+                            [item.label]: true,
+                          }));
+
                           onNavigate(child.page);
                         }}
                       >

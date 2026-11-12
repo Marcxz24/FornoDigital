@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import type { Cliente } from "../../clientes/types/cliente";
 import type { Produto } from "../../produtos/types/produto";
 import { EmptyState } from "../../../shared/components/EmptyState";
@@ -26,6 +26,10 @@ interface NewSaleFormProps {
   onCancel: () => void;
 }
 
+/**
+ * Apresenta o formulário de venda, calcula estimativas e coordena
+ * a seleção de produtos antes de enviar a requisição ao componente responsável.
+ */
 export function NewSaleForm({
   clientes,
   clientesLoading,
@@ -43,6 +47,7 @@ export function NewSaleForm({
   const [itensCarrinho, setItensCarrinho] = useState<ItemCarrinho[]>([]);
   const [desconto, setDesconto] = useState("0");
   const [erroFormulario, setErroFormulario] = useState<string | null>(null);
+  const submissaoEmAndamento = useRef(false);
 
   const produtosDisponiveis = produtos.filter(
     (produto) =>
@@ -75,6 +80,10 @@ export function NewSaleForm({
     ? Math.max(0, subtotalEstimado - descontoNumerico)
     : 0;
 
+  /**
+   * Adiciona um produto ao carrinho ou incrementa sua quantidade.
+   * Quando há controle de estoque, não permite ultrapassar a quantidade disponível.
+   */
   function adicionarProduto(produto: Produto) {
     setErroFormulario(null);
 
@@ -109,6 +118,9 @@ export function NewSaleForm({
     });
   }
 
+  /**
+   * Atualiza a quantidade digitada para o produto correspondente.
+   */
   function alterarQuantidade(produtoId: string, quantidade: string) {
     setErroFormulario(null);
     setItensCarrinho((atuais) =>
@@ -118,6 +130,9 @@ export function NewSaleForm({
     );
   }
 
+  /**
+   * Remove do carrinho o produto identificado pelo ID.
+   */
   function removerProduto(produtoId: string) {
     setErroFormulario(null);
     setItensCarrinho((atuais) =>
@@ -125,12 +140,23 @@ export function NewSaleForm({
     );
   }
 
+  /**
+   * Valida os dados e envia a venda. A trava impede envios repetidos;
+   * após confirmação da API, limpa carrinho, cliente e desconto.
+   */
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    if (registrando || submissaoEmAndamento.current) {
+      return;
+    }
+
     setErroFormulario(null);
 
     if (produtosLoading || produtosError !== null) {
-      setErroFormulario("Aguarde o carregamento dos produtos antes de registrar.");
+      setErroFormulario(
+        "Aguarde o carregamento dos produtos antes de registrar.",
+      );
       return;
     }
 
@@ -178,11 +204,21 @@ export function NewSaleForm({
       desconto: descontoNumerico,
     };
 
+    submissaoEmAndamento.current = true;
+
     try {
       const vendaRegistrada = await onRegistrar(request);
+
+      setClienteId("");
+      setItensCarrinho([]);
+      setDesconto("0");
+      setErroFormulario(null);
+
       onSuccess(vendaRegistrada);
     } catch {
-      // A mensagem de erro da API é exibida por erroRegistro.
+      // A venda permanece preenchida para permitir uma nova tentativa.
+    } finally {
+      submissaoEmAndamento.current = false;
     }
   }
 

@@ -1,0 +1,82 @@
+/* Toast temporário exibido no canto da tela */
+.swal2-popup.forno-alert-toast {
+  border: 1px solid rgb(96 165 250 / 24%);
+  border-radius: 0.9rem;
+  box-shadow: 0 18px 48px rgb(0 0 0 / 22%);
+  font-family: var(--font-family);
+}
+
+.swal2-popup.forno-alert-toast .swal2-title {
+  padding: 0.2rem 0.5rem;
+  font-size: 0.9rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  text-align: left;
+}
+
+/* Barra que indica quanto tempo falta para o toast fechar */
+.forno-alert-progress {
+  height: 3px;
+  border-radius: 999px;
+  background: var(--accent);
+  opacity: 0.75;
+}
+
+/* Diálogo usado nas confirmações de ações */
+.swal2-popup.forno-alert-dialog {
+  border: 1px solid rgb(96 165 250 / 24%);
+  border-radius: 1rem;
+  box-shadow: 0 24px 70px rgb(0 0 0 / 30%);
+  font-family: var(--font-family);
+}
+
+.forno-alert-title {
+  color: inherit;
+  font-size: 1.25rem;
+  font-weight: 750;
+  letter-spacing: -0.03em;
+}
+
+.swal2-popup.forno-alert-dialog .swal2-html-container {
+  color: inherit;
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+.forno-alert-confirm,
+.forno-alert-cancel {
+  min-height: 2.6rem;
+  padding: 0.65rem 1rem;
+  border: 0;
+  border-radius: 0.65rem;
+  font-family: var(--font-family);
+  font-size: 0.86rem;
+  font-weight: 650;
+  transition:
+    filter 150ms ease,
+    transform 150ms ease;
+}
+
+.forno-alert-confirm:hover,
+.forno-alert-cancel:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.forno-alert-confirm:focus-visible,
+.forno-alert-cancel:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+@media (max-width: 520px) {
+  .swal2-popup.forno-alert-toast {
+    width: calc(100% - 1.5rem);
+    margin: 0.75rem;
+  }
+
+  .swal2-popup.forno-alert-dialog {
+    width: calc(100% - 2rem);
+    padding: 1.1rem;
+  }
+}

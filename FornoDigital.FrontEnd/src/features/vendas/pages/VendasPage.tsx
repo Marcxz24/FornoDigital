@@ -5,6 +5,7 @@ import { NewSaleForm } from "../components/NewSaleForm";
 import { useVendasData } from "../hooks/useVendasData";
 import type { Venda } from "../types/venda";
 import { formatCurrency } from "../../../shared/utils/formatCurrency";
+import { notificar } from "../../../shared/utils/notificacoes";
 
 type VendasMode = "registrar-venda" | "visualizar-vendas";
 type VendasTheme = "light" | "dark";
@@ -34,14 +35,17 @@ export function VendasPage({
   const [vendaSelecionadaId, setVendaSelecionadaId] = useState<string | null>(
     null,
   );
-  const [mensagemSucesso, setMensagemSucesso] = useState<string | null>(null);
 
   const vendaSelecionada =
     vendas.data.find((venda) => venda.id === vendaSelecionadaId) ?? null;
 
+  /**
+ * Seleciona a venda registrada e exibe temporariamente o total confirmado pela API.
+ */
   function handleSuccess(venda: Venda) {
     setVendaSelecionadaId(venda.id);
-    setMensagemSucesso(
+    void notificar(
+      "success",
       `Venda registrada com sucesso. Total confirmado: ${formatCurrency(venda.total)}.`,
     );
   }
@@ -78,20 +82,6 @@ export function VendasPage({
           </button>
         </div>
       </header>
-
-      {mensagemSucesso && (
-        <div className="sale-success-message" role="status">
-          <span>{mensagemSucesso}</span>
-          <button
-            className="sale-success-dismiss"
-            type="button"
-            onClick={() => setMensagemSucesso(null)}
-            aria-label="Fechar confirmação"
-          >
-            Fechar
-          </button>
-        </div>
-      )}
 
       {estaRegistrando ? (
         <NewSaleForm
