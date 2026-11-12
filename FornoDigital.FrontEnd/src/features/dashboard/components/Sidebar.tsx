@@ -1,10 +1,38 @@
+import type { ReactNode } from "react";
+
+export type AppPage =
+  | "dashboard"
+  | "registrar-venda"
+  | "visualizar-vendas";
+
+interface SidebarProps {
+  paginaAtiva: AppPage;
+  onNavigate: (pagina: AppPage) => void;
+}
+
+interface NavigationChild {
+  label: string;
+  href: string;
+  page: AppPage;
+}
+
+interface NavigationItem {
+  label: string;
+  href: string;
+  icon: ReactNode;
+  active: boolean;
+  page?: AppPage;
+  children?: NavigationChild[];
+}
+
 /**
- * Relação estática contendo os itens de navegação principais do sistema (Visão geral, Clientes e Produtos).
+ * Relação estática contendo os itens de navegação principais do sistema.
  */
-const navigationItems = [
+const navigationItems: NavigationItem[] = [
   {
     label: "Visão geral",
     href: "#",
+    page: "dashboard",
     icon: (
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <rect x="3.5" y="3.5" width="7" height="7" rx="1.5" />
@@ -14,6 +42,29 @@ const navigationItems = [
       </svg>
     ),
     active: true,
+  },
+  {
+    label: "Vendas",
+    href: "#sales",
+    icon: (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 4h16v16H4z" />
+        <path d="M8 8h8M8 12h8M8 16h4" />
+      </svg>
+    ),
+    active: false,
+    children: [
+      {
+        label: "Registrar Venda",
+        href: "#sales-register",
+        page: "registrar-venda",
+      },
+      {
+        label: "Visualizar Vendas",
+        href: "#sales-list",
+        page: "visualizar-vendas",
+      },
+    ],
   },
   {
     label: "Clientes",
@@ -43,10 +94,9 @@ const navigationItems = [
 ];
 
 /**
- * Componente da barra lateral (<see cref="Sidebar"/>) responsável pela navegação estrutural 
- * entre as seções da aplicação e renderização dos ícones vetoriais.
+ * Barra lateral responsável pela navegação entre as seções do sistema.
  */
-export function Sidebar() {
+export function Sidebar({ paginaAtiva, onNavigate }: SidebarProps) {
   return (
     <aside className="sidebar" aria-label="Navegação principal">
       {/* Marca / Logotipo da barra lateral direcionando para o início */}
@@ -57,19 +107,66 @@ export function Sidebar() {
         <span className="sidebar-brand-name">Forno Digital</span>
       </a>
 
-      {/* Lista de navegação principal mapeada a partir dos itens definidos */}
-      <nav className="sidebar-nav" aria-label="Seções do dashboard">
-        {navigationItems.map((item) => (
-          <a
-            className={`sidebar-link${item.active ? " sidebar-link-active" : ""}`}
-            href={item.href}
-            key={item.label}
-            aria-current={item.active ? "page" : undefined}
-          >
-            <span className="sidebar-link-icon">{item.icon}</span>
-            <span className="sidebar-link-label">{item.label}</span>
-          </a>
-        ))}
+      {/* Lista de navegação principal */}
+      <nav className="sidebar-nav" aria-label="Seções do sistema">
+        {navigationItems.map((item) => {
+          const paginaFilhaAtiva =
+            item.children?.some((child) => child.page === paginaAtiva) ?? false;
+
+          const ativo =
+            (item.page !== undefined && item.page === paginaAtiva) ||
+            paginaFilhaAtiva;
+
+          return (
+            <div className="sidebar-nav-group" key={item.label}>
+              <a
+                className={`sidebar-link${ativo ? " sidebar-link-active" : ""}`}
+                href={item.href}
+                aria-current={
+                  item.page === paginaAtiva ? "page" : undefined
+                }
+                onClick={
+                  item.page
+                    ? (event) => {
+                        event.preventDefault();
+                        onNavigate(item.page!);
+                      }
+                    : item.children
+                      ? (event) => event.preventDefault()
+                      : undefined
+                }
+              >
+                <span className="sidebar-link-icon">{item.icon}</span>
+                <span className="sidebar-link-label">{item.label}</span>
+              </a>
+
+              {item.children && (
+                <div className="sidebar-subnav" aria-label="Seções de vendas">
+                  {item.children.map((child) => {
+                    const filhoAtivo = child.page === paginaAtiva;
+
+                    return (
+                      <a
+                        className={`sidebar-subnav-link${filhoAtivo ? " sidebar-subnav-link-active" : ""}`}
+                        href={child.href}
+                        key={child.page}
+                        aria-current={filhoAtivo ? "page" : undefined}
+                        onClick={(event) => {
+                          event.preventDefault();
+                          onNavigate(child.page);
+                        }}
+                      >
+                        <span className="sidebar-subnav-label">
+                          {child.label}
+                        </span>
+                      </a>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </nav>
 
       {/* Rodapé da barra lateral indicando o contexto do painel da padaria */}

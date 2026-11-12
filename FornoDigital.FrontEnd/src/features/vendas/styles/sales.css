@@ -1,0 +1,242 @@
+.sales-page {
+  flex: 1;
+  min-width: 0;
+}
+
+.sales-page .dashboard-header {
+  flex-wrap: wrap;
+}
+
+.sales-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+.sales-sections {
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+  align-items: start;
+}
+
+.sales-panel,
+.sale-details-panel {
+  min-width: 0;
+}
+
+.sale-card {
+  display: grid;
+  gap: 15px;
+}
+
+.sale-card-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.sale-client-name {
+  margin: 0;
+  color: var(--text);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.sale-date {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.sale-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+  padding-top: 13px;
+  border-top: 1px solid var(--border);
+}
+
+.sale-summary div,
+.sale-totals div {
+  min-width: 0;
+}
+
+.sale-summary dt,
+.sale-totals dt {
+  margin-bottom: 4px;
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+.sale-summary dd,
+.sale-totals dd {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.82rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.sale-details-button,
+.sale-primary-button,
+.sale-secondary-button,
+.sale-success-dismiss {
+  min-height: 38px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--surface-inset);
+  color: var(--text-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 650;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease,
+    color 150ms ease,
+    transform 150ms ease;
+}
+
+.sale-details-button:hover,
+.sale-secondary-button:hover {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.sale-primary-button {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.sale-primary-button:hover {
+  border-color: var(--accent-hover);
+  background: var(--accent-hover);
+  transform: translateY(-1px);
+}
+
+.sale-details-button:focus-visible,
+.sale-primary-button:focus-visible,
+.sale-secondary-button:focus-visible,
+.sale-success-dismiss:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.sale-primary-button:disabled,
+.sale-secondary-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+  transform: none;
+}
+
+.sale-items-table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+}
+
+.sale-items-table {
+  width: 100%;
+  min-width: 600px;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  text-align: left;
+}
+
+.sale-items-table th,
+.sale-items-table td {
+  padding: 12px 13px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.sale-items-table thead th {
+  background: var(--surface-inset);
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 650;
+}
+
+.sale-items-table tbody th {
+  color: var(--text);
+  font-weight: 650;
+}
+
+.sale-items-table tbody tr:last-child th,
+.sale-items-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.sale-totals {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  background: var(--surface-inset);
+}
+
+.sale-totals div {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.sale-total {
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.sale-total dt,
+.sale-total dd {
+  color: var(--accent);
+  font-size: 0.9rem;
+  font-weight: 750;
+}
+
+.sale-success-message {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0 0 18px;
+  padding: 13px 15px;
+  border: 1px solid var(--accent-border);
+  border-radius: 11px;
+  background: var(--accent-soft);
+  color: var(--text);
+  font-size: 0.82rem;
+}
+
+.sale-success-dismiss {
+  min-height: 32px;
+  padding: 5px 9px;
+}
+
+@media (max-width: 1000px) {
+  .sales-sections {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .sale-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sale-card-heading {
+    flex-direction: column;
+  }
+
+  .sale-success-message {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}

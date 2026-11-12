@@ -1,0 +1,116 @@
+.app-shell {
+  display: flex;
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse at 50% -25%, rgb(96 165 250 / 7%), transparent 55%),
+    var(--background);
+  color: var(--text);
+  transition:
+    background-color 180ms ease,
+    color 180ms ease;
+}
+
+.theme-light.app-shell {
+  background:
+    radial-gradient(ellipse at 50% -25%, rgb(37 99 235 / 6%), transparent 55%),
+    var(--background);
+}
+
+.dashboard {
+  width: min(1440px, 100%);
+  min-height: 100vh;
+  margin: 0 auto;
+  padding: 32px clamp(18px, 4vw, 48px) 48px;
+}
+
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 30px;
+}
+
+.brand-mark {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--accent-border);
+  border-radius: 14px;
+  background: var(--accent);
+  color: #eff6ff;
+  box-shadow: 0 8px 22px rgb(96 165 250 / 18%);
+}
+
+.brand-mark span {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.06em;
+}
+
+.dashboard-heading {
+  min-width: 0;
+}
+
+.eyebrow {
+  margin: 0 0 5px;
+  color: var(--accent);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.dashboard-heading h1 {
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(1.55rem, 3vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  line-height: 1.2;
+}
+
+.dashboard-subtitle {
+  margin: 7px 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.dashboard-sections {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 18px;
+}
+
+@media (max-width: 900px) {
+  .dashboard-sections {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .dashboard {
+    padding: 24px 14px 36px;
+  }
+
+  .dashboard-header {
+    gap: 11px;
+    margin-bottom: 22px;
+  }
+
+  .brand-mark {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+  }
+
+  .brand-mark span {
+    font-size: 1.2rem;
+  }
+
+  .dashboard-subtitle {
+    font-size: 0.82rem;
+  }
+}

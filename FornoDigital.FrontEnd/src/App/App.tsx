@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
-import { Sidebar } from "../features/dashboard/components/Sidebar";
+import {
+  Sidebar,
+  type AppPage,
+} from "../features/dashboard/components/Sidebar";
 import { DashboardPage } from "../features/dashboard/pages/DashboardPage";
+import { VendasPage } from "../features/vendas/pages/VendasPage";
 import "../styles/global.css";
 
 /**
@@ -14,25 +18,21 @@ type Theme = "light" | "dark";
 const THEME_STORAGE_KEY = "fornodigital-theme";
 
 /**
- * Componente raiz (App) da aplicação FornoDigital, responsável por gerenciar o estado global 
- * do tema (light/dark), persistência de preferência e renderização do layout principal (Sidebar e Dashboard).
+ * Componente raiz responsável pelo tema, pela navegação e pela página atual.
  */
 export default function App() {
-  // Inicializa o estado do tema recuperando a preferência salva no localStorage ou definindo "light" por padrão
   const [theme, setTheme] = useState<Theme>(() => {
     const savedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
 
     return savedTheme === "dark" ? "dark" : "light";
   });
 
-  // Sincroniza e persiste o tema selecionado no localStorage sempre que o estado "theme" for alterado
+  const [paginaAtiva, setPaginaAtiva] = useState<AppPage>("dashboard");
+
   useEffect(() => {
     window.localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
 
-  /**
-   * Alterna dinamicamente entre os temas claro e escuro.
-   */
   function toggleTheme() {
     setTheme((currentTheme) =>
       currentTheme === "light" ? "dark" : "light",
@@ -41,8 +41,24 @@ export default function App() {
 
   return (
     <div className={`app-shell theme-${theme}`}>
-      <Sidebar />
-      <DashboardPage theme={theme} onToggleTheme={toggleTheme} />
+      <Sidebar
+        paginaAtiva={paginaAtiva}
+        onNavigate={setPaginaAtiva}
+      />
+
+      {paginaAtiva === "dashboard" ? (
+        <DashboardPage
+          theme={theme}
+          onToggleTheme={toggleTheme}
+        />
+      ) : (
+        <VendasPage
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          modo={paginaAtiva}
+          onNavigate={setPaginaAtiva}
+        />
+      )}
     </div>
   );
 }

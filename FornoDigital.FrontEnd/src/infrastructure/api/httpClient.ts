@@ -1,33 +1,103 @@
 /**
- * URL base da API obtida através das variáveis de ambiente do projeto, 
- * com qualquer barra diagonal final redundante removida para padronização das rotas.
+ * Endereço base da API, configurado no ambiente local.
+ * Se a variável não estiver definida, usa o endereço local padrão.
  */
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/+$/, "");
+const API_BASE_URL = (
+  import.meta.env.VITE_API_BASE_URL?.trim() || "https://localhost:7199"
+).replace(/\/+$/, "");
 
 /**
- * Realiza uma requisição HTTP do tipo GET padronizada para o endpoint informado, 
- * validando a disponibilidade da URL base, executando a chamada fetch e desserializando a resposta em JSON.
- * 
- * @template T O tipo esperado do dado de retorno da requisição.
- * @param path O caminho ou rota relativa do endpoint da API (ex: "/api/clientes/listar").
- * @returns Uma promessa (<see cref="Promise"/>) contendo os dados desserializados do tipo genérico <typeparamref name="T"/>.
- * @throws {Error} Lança um erro se a variável de ambiente <c>VITE_API_BASE_URL</c> não estiver configurada ou se a resposta HTTP falhar.
+ * Tenta extrair uma mensagem útil do corpo de uma resposta HTTP com erro.
+ * Também considera o formato de erros de validação do ASP.NET.
  */
-export async function getJson<T>(path: string): Promise<T> {
-  if (!API_BASE_URL) {
-    throw new Error("A variável VITE_API_BASE_URL não está configurada.");
+async function getErrorMessage(response: Response): Promise<string> {
+  const fallbackMessage = `A requisição falhou (HTTP ${response.status}).`;
+  const responseText = await response.text();
+
+  if (!responseText) {
+    return fallbackMessage;
   }
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
+  try {
+    const body: unknown = JSON.parse(responseText);
+
+    if (typeof body !== "object" || body === null) {
+      return fallbackMessage;
+    }
+
+    const errorBody = body as Record<string, unknown>;
+
+    if (typeof errorBody.detail === "string") {
+      return errorBody.detail;
+    }
+
+    if (typeof errorBody.message === "string") {
+      return errorBody.message;
+    }
+
+    if (typeof errorBody.title === "string") {
+      return errorBody.title;
+    }
+
+    const errors = errorBody.errors;
+
+    if (typeof errors === "object" && errors !== null) {
+      const messages = Object.values(errors as Record<string, unknown>)
+        .flatMap((value) => (Array.isArray(value) ? value : [value]))
+        .filter((value): value is string => typeof value === "string");
+
+      if (messages.length > 0) {
+        return messages.join(" ");
+      }
+    }
+  } catch {
+    // Se o corpo não for JSON, usa a mensagem HTTP padrão abaixo.
+  }
+
+  return fallbackMessage;
+}
+
+/**
+ * Faz uma requisição e converte a resposta JSON para o tipo informado.
+ */
+async function requestJson<T>(
+  path: string,
+  options: RequestInit,
+): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}${path}`, options);
+
+  if (!response.ok) {
+    throw new Error(await getErrorMessage(response));
+  }
+
+  return (await response.json()) as T;
+}
+
+/**
+ * Realiza uma requisição GET que espera receber JSON.
+ */
+export function getJson<T>(path: string): Promise<T> {
+  return requestJson<T>(path, {
     method: "GET",
     headers: {
       Accept: "application/json",
     },
   });
+}
 
-  if (!response.ok) {
-    throw new Error(`A requisição falhou (HTTP ${response.status}).`);
-  }
-
-  return (await response.json()) as T;
+/**
+ * Realiza uma requisição POST enviando o corpo como JSON e esperando JSON na resposta.
+ */
+export function postJson<TRequest, TResponse>(
+  path: string,
+  body: TRequest,
+): Promise<TResponse> {
+  return requestJson<TResponse>(path, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
 }
