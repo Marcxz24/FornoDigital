@@ -1,6 +1,6 @@
 /**
- * Representa a estrutura de dados de um produto no sistema, espelhando 
- * as propriedades da entidade de domínio e os metadados de controle e auditoria.
+ * Representa os dados de produto recebidos da API pelo Front-End,
+ * incluindo informações de disponibilidade, estoque e auditoria.
  */
 export interface Produto {
   /** Identificador único universal (UUID) do produto. */
@@ -25,4 +25,25 @@ export interface Produto {
   dataCriacao: string;
   /** Data e hora em UTC da última atualização do registro (ou nulo se nunca foi alterado). */
   dataAtualizacao: string | null;
+}
+
+/**
+ * Códigos de unidade de medida que o formulário pode enviar à API.
+ * A união restringe o pedido às opções suportadas pelo sistema.
+ */
+export type UnidadeMedidaCodigo = 1 | 2 | 3 | 4 | 5;
+
+/**
+ * Dados enviados pelo Front-End ao cadastrar um produto.
+ * O preço é um número em reais; quando o estoque não for controlado,
+ * a quantidade deve ser enviada como null.
+ */
+export interface ProdutoRequest {
+  nome: string;
+  descricao: string | null;
+  preco: number;
+  disponivel: boolean;
+  unidadeMedida: UnidadeMedidaCodigo;
+  controlaEstoque: boolean;
+  quantidadeEstoque: number | null;
 }

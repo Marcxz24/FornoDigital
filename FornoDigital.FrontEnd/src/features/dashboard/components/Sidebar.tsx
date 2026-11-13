@@ -5,7 +5,9 @@ export type AppPage =
   | "registrar-venda"
   | "visualizar-vendas"
   | "cadastrar-cliente"
-  | "listar-clientes";
+  | "listar-clientes"
+  | "cadastrar-produto"
+  | "listar-produtos";
 
 interface SidebarProps {
   paginaAtiva: AppPage;
@@ -28,7 +30,7 @@ interface NavigationItem {
 }
 
 /**
- * Configuração dos itens e subitens que aparecem na navegação lateral.
+ * Configuração dos itens e subitens exibidos na navegação lateral.
  */
 const navigationItems: NavigationItem[] = [
   {
@@ -95,7 +97,7 @@ const navigationItems: NavigationItem[] = [
   },
   {
     label: "Produtos",
-    href: "#products-title",
+    href: "#products",
     icon: (
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <path d="m12 3 8.5 4.5v9L12 21l-8.5-4.5v-9L12 3Z" />
@@ -104,12 +106,24 @@ const navigationItems: NavigationItem[] = [
       </svg>
     ),
     active: false,
+    children: [
+      {
+        label: "Cadastrar Produto",
+        href: "#products-register",
+        page: "cadastrar-produto",
+      },
+      {
+        label: "Listar Produtos",
+        href: "#products-list",
+        page: "listar-produtos",
+      },
+    ],
   },
 ];
 
 /**
- * Renderiza a navegação lateral e controla a expansão dos grupos.
- * Os grupos começam recolhidos; selecionar um subitem abre seu grupo.
+ * Renderiza a navegação e controla a expansão dos grupos.
+ * Os grupos começam recolhidos; clicar no título mostra ou esconde os subitens.
  */
 export function Sidebar({ paginaAtiva, onNavigate }: SidebarProps) {
   const [gruposAbertos, setGruposAbertos] = useState<Record<string, boolean>>(

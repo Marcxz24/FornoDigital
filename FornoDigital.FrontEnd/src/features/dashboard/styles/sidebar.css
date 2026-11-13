@@ -76,6 +76,14 @@
     border-color 150ms ease;
 }
 
+.sidebar-group-toggle {
+  appearance: none;
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
 .sidebar-link:hover {
   background: var(--surface-raised);
   color: var(--text);

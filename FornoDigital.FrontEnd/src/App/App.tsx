@@ -6,6 +6,8 @@ import {
 import { DashboardPage } from "../features/dashboard/pages/DashboardPage";
 import { VendasPage } from "../features/vendas/pages/VendasPage";
 import { ClientesPage } from "../features/clientes/pages/ClientesPage";
+import { CadastrarProdutoPage } from "../features/produtos/pages/CadastrarProdutoPage";
+import { ListarProdutosPage } from "../features/produtos/pages/ListarProdutosPage";
 import "../styles/global.css";
 
 /**
@@ -66,10 +68,25 @@ export default function App() {
           modo={paginaAtiva}
           onNavigate={setPaginaAtiva}
         />
-      ) : (
+      ) : paginaAtiva === "cadastrar-cliente" ||
+        paginaAtiva === "listar-clientes" ? (
         <ClientesPage
           key={paginaAtiva}
           paginaAtiva={paginaAtiva}
+          onNavigate={setPaginaAtiva}
+        />
+      ) : paginaAtiva === "cadastrar-produto" ? (
+        <CadastrarProdutoPage
+          key={paginaAtiva}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          onNavigate={setPaginaAtiva}
+        />
+      ) : (
+        <ListarProdutosPage
+          key={paginaAtiva}
+          theme={theme}
+          onToggleTheme={toggleTheme}
           onNavigate={setPaginaAtiva}
         />
       )}
