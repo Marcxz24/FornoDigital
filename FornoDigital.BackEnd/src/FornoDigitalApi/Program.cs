@@ -5,6 +5,8 @@ using FornoDigitalApplication.Clientes.EditarCliente;
 using FornoDigitalApplication.Clientes.ExcluirCliente;
 using FornoDigitalApplication.Clientes.ListarCliente;
 using FornoDigitalApplication.Produtos.CadastrarProduto;
+using FornoDigitalApplication.Produtos.AlterarDisponibilidadeProduto;
+using FornoDigitalApplication.Produtos.EditarProduto;
 using FornoDigitalApplication.Produtos.ListarProdutos;
 using FornoDigitalApplication.Vendas.ListarVendas;
 using FornoDigitalApplication.Vendas.ObterVenda;
@@ -61,6 +63,8 @@ builder.Services.AddScoped<ListarClientesHandler>();
 builder.Services.AddScoped<IProdutoRepository, ProdutoRepository>();
 builder.Services.AddScoped<CadastrarProdutoHandler>();
 builder.Services.AddScoped<ListarProdutosHandler>();
+builder.Services.AddScoped<EditarProdutoHandler>();
+builder.Services.AddScoped<AlterarDisponibilidadeProdutoHandler>();
 
 // -- Representa todos os serviços relacionados à entidade Venda
 builder.Services.AddScoped<IVendaRepository, VendaRepository>();

@@ -19,6 +19,14 @@ namespace FornoDigitalDomain.Repositories.Produtos
         Task<Produto?> ObterPorIdAsync(Guid id);
 
         /// <summary>
+        /// Verifica se já existe um produto com o mesmo nome, podendo ignorar o produto editado.
+        /// A comparação de espaços e caixa é feita pela camada de aplicação.
+        /// </summary>
+        /// <param name="nome">Nome a verificar.</param>
+        /// <param name="ignorarProdutoId">ID opcional do produto que não deve entrar na verificação.</param>
+        Task<bool> ExisteComNomeAsync(string nome, Guid? ignorarProdutoId = null);
+
+        /// <summary>
         /// Retorna de forma assíncrona uma lista somente leitura contendo todos os produtos cadastrados no sistema.
         /// </summary>
         /// <returns>Uma tarefa que representa a operação assíncrona, contendo uma lista somente leitura de <see cref="Produto"/>.</returns>

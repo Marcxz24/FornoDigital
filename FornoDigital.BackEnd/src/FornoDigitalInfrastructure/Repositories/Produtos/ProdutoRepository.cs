@@ -32,6 +32,31 @@ namespace FornoDigitalInfrastructure.Repositories.Produtos
             return await _context.Produtos.FindAsync(id);
         }
 
+        /// <inheritdoc />
+        public async Task<bool> ExisteComNomeAsync(string nome, Guid? ignorarProdutoId = null)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(nome);
+
+            var consulta = _context.Produtos
+                .AsNoTracking()
+                .AsQueryable();
+
+            if (ignorarProdutoId.HasValue)
+            {
+                consulta = consulta.Where(produto => produto.Id != ignorarProdutoId.Value);
+            }
+
+            var nomesExistentes = await consulta
+                .Select(produto => produto.Nome)
+                .ToListAsync();
+
+            var comparador = StringComparer.OrdinalIgnoreCase;
+            var nomeNormalizado = nome.Trim();
+
+            return nomesExistentes.Any(nomeExistente =>
+                comparador.Equals(nomeExistente.Trim(), nomeNormalizado));
+        }
+
         /// <summary>
         /// Retorna de forma assíncrona uma lista somente leitura com todos os produtos cadastrados.
         /// Utiliza o modo <c>AsNoTracking</c> para otimizar consultas de leitura sem rastreamento de estado.

@@ -119,28 +119,51 @@ namespace FornoDigitalDomain.Entities.Produtos
         }
 
         /// <summary>
-        /// Altera os dados cadastrais principais de um produto existente, validando as novas informações.
+        /// Altera os dados cadastrais e a configuração de estoque de um produto,
+        /// mantendo a disponibilidade como uma operação independente.
         /// </summary>
         /// <param name="nome">Novo nome do produto.</param>
-        /// <param name="descricao">Nova descrição do produto.</param>
+        /// <param name="descricao">Nova descrição opcional do produto.</param>
         /// <param name="preco">Novo preço de venda.</param>
         /// <param name="unidadeMedida">Nova unidade de medida comercial.</param>
-        /// <exception cref="ArgumentException">Lançado se o novo nome for inválido.</exception>
-        /// <exception cref="ArgumentOutOfRangeException">Lançado se o preço ou a unidade de medida forem inválidos.</exception>
+        /// <param name="controlaEstoque">Indica se o produto passará a controlar estoque.</param>
+        /// <param name="quantidadeEstoque">Nova quantidade; se o controle estiver ativo e for nula, será zero.</param>
+        /// <exception cref="ArgumentException">Lançado se o nome for inválido ou se for informada quantidade sem controle de estoque.</exception>
+        /// <exception cref="ArgumentOutOfRangeException">Lançado se preço, quantidade ou unidade de medida forem inválidos.</exception>
         public void AlterarDados(
-        string nome,
-        string? descricao,
-        decimal preco,
-        UnidadeMedidaProduto unidadeMedida)
+            string nome,
+            string? descricao,
+            decimal preco,
+            UnidadeMedidaProduto unidadeMedida,
+            bool controlaEstoque,
+            decimal? quantidadeEstoque)
         {
             ValidarNome(nome);
             ValidarPreco(preco);
             ValidarUnidadeMedida(unidadeMedida);
 
+            if (!controlaEstoque && quantidadeEstoque.HasValue)
+            {
+                throw new ArgumentException(
+                    "Não informe quantidade quando o estoque não é controlado.",
+                    nameof(quantidadeEstoque));
+            }
+
+            if (quantidadeEstoque < 0)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(quantidadeEstoque),
+                    "A quantidade em estoque não pode ser negativa.");
+            }
+
             Nome = nome.Trim();
             Descricao = NormalizarOpcional(descricao);
             Preco = preco;
             UnidadeMedida = unidadeMedida;
+            ControlaEstoque = controlaEstoque;
+            QuantidadeEstoque = controlaEstoque
+                ? quantidadeEstoque ?? 0m
+                : null;
 
             RegistrarAtualizacao();
         }

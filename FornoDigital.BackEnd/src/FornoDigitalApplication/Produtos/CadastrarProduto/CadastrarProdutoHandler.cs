@@ -36,6 +36,12 @@ namespace FornoDigitalApplication.Produtos.CadastrarProduto
         {
             ArgumentNullException.ThrowIfNull(command);
 
+            if (await _produtoRepository.ExisteComNomeAsync(command.Nome))
+            {
+                throw new InvalidOperationException(
+                    $"Já existe um produto cadastrado com o nome '{command.Nome.Trim()}'.");
+            }
+
             var produto = new Produto(
                 nome: command.Nome,
                 descricao: command.Descricao,
