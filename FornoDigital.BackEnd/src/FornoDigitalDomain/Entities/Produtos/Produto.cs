@@ -216,6 +216,41 @@ namespace FornoDigitalDomain.Entities.Produtos
         }
 
         /// <summary>
+        /// Remove do produto o código de barras informado.
+        /// </summary>
+        /// <param name="codigoBarras">Código de barras a remover.</param>
+        /// <returns>
+        /// <c>true</c> se o código foi removido; <c>false</c> se não estava associado.
+        /// </returns>
+        /// <exception cref="ArgumentException">
+        /// Lançada se o código for nulo, vazio ou composto somente por espaços.
+        /// </exception>
+        public bool RemoverCodigoBarras(string codigoBarras)
+        {
+            if (string.IsNullOrWhiteSpace(codigoBarras))
+            {
+                throw new ArgumentException(
+                    "O código de barras é obrigatório.",
+                    nameof(codigoBarras));
+            }
+
+            var codigoNormalizado = codigoBarras.Trim();
+
+            var codigo = _codigosBarras.FirstOrDefault(item =>
+                StringComparer.Ordinal.Equals(item.CodigoBarras, codigoNormalizado));
+
+            if (codigo is null)
+            {
+                return false;
+            }
+
+            _codigosBarras.Remove(codigo);
+            RegistrarAtualizacao();
+
+            return true;
+        }
+
+        /// <summary>
         /// Altera o status de disponibilidade de venda do produto.
         /// </summary>
         /// <param name="disponivel">Novo estado de disponibilidade.</param>

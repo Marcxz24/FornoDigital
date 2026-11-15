@@ -3,6 +3,7 @@ using FornoDigitalApplication.Produtos.CadastrarProduto;
 using FornoDigitalApplication.Produtos.AlterarDisponibilidadeProduto;
 using FornoDigitalApplication.Produtos.EditarProduto;
 using FornoDigitalApplication.Produtos.ListarProdutos;
+using FornoDigitalApplication.Produtos.RemoverCodigoBarrasProduto;
 using FornoDigitalDomain.Entities.Produtos;
 using Microsoft.AspNetCore.Mvc;
 
@@ -19,6 +20,7 @@ namespace FornoDigitalApi.Controllers.Produtos
         private readonly ListarProdutosHandler _listarProdutosHandler;
         private readonly EditarProdutoHandler _editarProdutoHandler;
         private readonly AlterarDisponibilidadeProdutoHandler _alterarDisponibilidadeProdutoHandler;
+        private readonly RemoverCodigoBarrasProdutoHandler _removerCodigoBarrasProdutoHandler;
 
         /// <summary>
         /// Inicializa uma nova instância da classe <see cref="ProdutosController"/> injetando as dependências necessárias.
@@ -27,16 +29,19 @@ namespace FornoDigitalApi.Controllers.Produtos
         /// <param name="listarProdutosHandler">Manipulador responsável por processar o caso de uso de listagem de produtos.</param>
         /// <param name="editarProdutoHandler">Manipulador responsável por processar o caso de uso de edição de produtos.</param>
         /// <param name="alterarDisponibilidadeProdutoHandler">Manipulador responsável por processar o caso de uso de alteração de disponibilidade de produtos.</param>
+        /// <param name="removerCodigoBarrasProdutoHandler">Manipulador responsável por processar o caso de uso de remoção de códigos de barras de produtos.</param>
         public ProdutosController(
             CadastrarProdutoHandler cadastrarProdutoHandler,
             ListarProdutosHandler listarProdutosHandler,
             EditarProdutoHandler editarProdutoHandler,
-            AlterarDisponibilidadeProdutoHandler alterarDisponibilidadeProdutoHandler)
+            AlterarDisponibilidadeProdutoHandler alterarDisponibilidadeProdutoHandler,
+            RemoverCodigoBarrasProdutoHandler removerCodigoBarrasProdutoHandler)
         {
             _cadastrarProdutoHandler = cadastrarProdutoHandler;
             _listarProdutosHandler = listarProdutosHandler;
             _editarProdutoHandler = editarProdutoHandler;
             _alterarDisponibilidadeProdutoHandler = alterarDisponibilidadeProdutoHandler;
+            _removerCodigoBarrasProdutoHandler = removerCodigoBarrasProdutoHandler;
         }
 
         /// <summary>
@@ -162,6 +167,39 @@ namespace FornoDigitalApi.Controllers.Produtos
                     Detail = exception.Message,
                     Status = StatusCodes.Status409Conflict
                 });
+            }
+        }
+
+        /// <summary>
+        /// Remove um código de barras associado a um produto.
+        /// </summary>
+        /// <param name="produtoId">Identificador do produto.</param>
+        /// <param name="codigoBarras">Código de barras a remover.</param>
+        /// <response code="204">Código removido.</response>
+        /// <response code="400">Identificador inválido.</response>
+        /// <response code="404">Produto ou código não encontrado.</response>
+        [HttpDelete("{produtoId:guid}/codigos-barras/{codigoBarras}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> RemoverCodigoBarras(
+            [FromRoute] Guid produtoId,
+            [FromRoute] string codigoBarras)
+        {
+            try
+            {
+                var command = new RemoverCodigoBarrasProdutoCommand(
+                    produtoId,
+                    codigoBarras);
+
+                var removido = await _removerCodigoBarrasProdutoHandler.RemoverAsync(command);
+
+                return removido ? NoContent() : NotFound();
+            }
+            catch (ArgumentException exception)
+            {
+                ModelState.AddModelError("codigoBarras", exception.Message);
+                return ValidationProblem(ModelState);
             }
         }
 
