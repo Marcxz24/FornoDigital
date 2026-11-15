@@ -1,5 +1,8 @@
 using FornoDigitalDomain.Enums.Produtos;
+using System;
+using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 
 namespace FornoDigitalApi.Contracts.Produtos
 {
@@ -44,8 +47,16 @@ namespace FornoDigitalApi.Contracts.Produtos
             ParseLimitsInInvariantCulture = true)]
         public decimal? QuantidadeEstoque { get; init; }
 
-        /// <summary>Valida regras de precisão monetária e consistência do controle de estoque.</summary>
-        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        /// <summary>
+        /// Códigos de barras do produto. Pode ser omitido; na edição, isso preserva os códigos atuais.
+        /// </summary>
+        public List<string>? CodigosBarras { get; init; }
+
+        /// <summary>
+        /// Valida precisão monetária, consistência do estoque e a coleção de códigos de barras.
+        /// </summary>
+        public IEnumerable<ValidationResult> Validate(
+            ValidationContext validationContext)
         {
             if (Preco > 0 && Preco != decimal.Round(Preco, 2))
             {
@@ -59,6 +70,34 @@ namespace FornoDigitalApi.Contracts.Produtos
                 yield return new ValidationResult(
                     "Informe a quantidade somente quando o controle de estoque estiver ativo.",
                     new[] { nameof(QuantidadeEstoque) });
+            }
+
+            if (CodigosBarras is null)
+            {
+                yield break;
+            }
+
+            var codigosEncontrados = new HashSet<string>(StringComparer.Ordinal);
+
+            foreach (var codigo in CodigosBarras)
+            {
+                if (string.IsNullOrWhiteSpace(codigo))
+                {
+                    yield return new ValidationResult(
+                        "Os códigos de barras não podem ser vazios.",
+                        new[] { nameof(CodigosBarras) });
+
+                    continue;
+                }
+
+                var codigoNormalizado = codigo.Trim();
+
+                if (!codigosEncontrados.Add(codigoNormalizado))
+                {
+                    yield return new ValidationResult(
+                        "A lista contém códigos de barras repetidos.",
+                        new[] { nameof(CodigosBarras) });
+                }
             }
         }
     }

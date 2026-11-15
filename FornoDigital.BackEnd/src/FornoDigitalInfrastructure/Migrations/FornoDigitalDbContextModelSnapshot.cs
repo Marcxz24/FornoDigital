@@ -213,6 +213,33 @@ namespace FornoDigitalInfrastructure.Migrations
                     b.ToTable("Vendas", (string)null);
                 });
 
+            modelBuilder.Entity("FornoDigitalDomain.Entities.Produtos.Produto", b =>
+                {
+                    b.OwnsMany("FornoDigitalDomain.Entities.Produtos.CodigoBarrasProduto", "CodigosBarras", b1 =>
+                        {
+                            b1.Property<Guid>("Produto_Id")
+                                .HasColumnType("TEXT")
+                                .HasColumnName("Produto_Id");
+
+                            b1.Property<string>("CodigoBarras")
+                                .HasColumnType("TEXT")
+                                .HasColumnName("Codigo_Barras");
+
+                            b1.HasKey("Produto_Id", "CodigoBarras");
+
+                            b1.HasIndex("CodigoBarras")
+                                .IsUnique()
+                                .HasDatabaseName("UX_produtos_codigo_barras_Codigo_Barras");
+
+                            b1.ToTable("produtos_codigo_barras", (string)null);
+
+                            b1.WithOwner()
+                                .HasForeignKey("Produto_Id");
+                        });
+
+                    b.Navigation("CodigosBarras");
+                });
+
             modelBuilder.Entity("FornoDigitalDomain.Entities.Vendas.ItemVenda", b =>
                 {
                     b.HasOne("FornoDigitalDomain.Entities.Produtos.Produto", null)

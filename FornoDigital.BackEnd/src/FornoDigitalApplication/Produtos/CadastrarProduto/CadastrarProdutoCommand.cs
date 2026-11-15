@@ -19,6 +19,7 @@ namespace FornoDigitalApplication.Produtos.CadastrarProduto
     /// Quantidade inicial opcional. Se o controle de estoque estiver ativo e o valor for nulo,
     /// a entidade inicia a quantidade em zero. Se o controle estiver desativado, o valor deve ser nulo.
     /// </param>
+    /// <param name="CodigosBarras">Códigos de barras iniciais; nulo significa coleção vazia.</param>
     public sealed record CadastrarProdutoCommand(
         string Nome,
         decimal Preco,
@@ -26,6 +27,7 @@ namespace FornoDigitalApplication.Produtos.CadastrarProduto
         UnidadeMedidaProduto UnidadeMedida,
         bool ControlaEstoque,
         string? Descricao = null,
-        decimal? QuantidadeEstoque = null
+        decimal? QuantidadeEstoque = null,
+        IReadOnlyCollection<string>? CodigosBarras = null
     );
 }

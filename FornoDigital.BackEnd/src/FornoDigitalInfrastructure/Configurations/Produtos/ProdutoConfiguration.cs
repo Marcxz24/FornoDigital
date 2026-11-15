@@ -82,6 +82,39 @@ namespace FornoDigitalInfrastructure.Configurations.Produtos
 
             // Ignora a propriedade calculada de domínio para que o EF Core não tente mapeá-la como coluna na tabela
             builder.Ignore(produto => produto.TemEstoque);
+
+            // Mapeia os códigos de barras em uma tabela própria pertencente ao Produto.
+            builder.OwnsMany<CodigoBarrasProduto>(
+            produto => produto.CodigosBarras,
+            codigo =>
+            {
+                codigo.ToTable("produtos_codigo_barras");
+
+                codigo.WithOwner()
+                    .HasForeignKey("Produto_Id");
+
+                codigo.Property<Guid>("Produto_Id")
+                    .HasColumnName("Produto_Id")
+                    .HasColumnType("TEXT");
+
+                codigo.Property(item => item.CodigoBarras)
+                    .HasColumnName("Codigo_Barras")
+                    .HasColumnType("TEXT")
+                    .IsRequired();
+
+                codigo.HasKey(
+                    "Produto_Id",
+                    nameof(CodigoBarrasProduto.CodigoBarras));
+
+                codigo.HasIndex(item => item.CodigoBarras)
+                    .IsUnique()
+                    .HasDatabaseName("UX_produtos_codigo_barras_Codigo_Barras");
+            });
+
+            // Usa a lista privada da entidade para materializar e persistir a coleção.
+            builder.Navigation(produto => produto.CodigosBarras)
+                .HasField("_codigosBarras")
+                .UsePropertyAccessMode(PropertyAccessMode.Field);
         }
     }
 }

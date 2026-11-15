@@ -57,6 +57,41 @@ namespace FornoDigitalInfrastructure.Repositories.Produtos
                 comparador.Equals(nomeExistente.Trim(), nomeNormalizado));
         }
 
+        /// <inheritdoc />
+        public async Task<IReadOnlyList<string>> ObterCodigosBarrasEmUsoAsync(
+            IReadOnlyCollection<string> codigosBarras,
+            Guid? produtoId = null,
+            CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(codigosBarras);
+
+            var codigosNormalizados = codigosBarras
+                .Where(codigo => !string.IsNullOrWhiteSpace(codigo))
+                .Select(codigo => codigo.Trim())
+                .Distinct()
+                .ToArray();
+
+            if (codigosNormalizados.Length == 0)
+            {
+                return Array.Empty<string>();
+            }
+
+            IQueryable<Produto> produtos = _context.Produtos.AsNoTracking();
+
+            // Na edição, ignora o próprio produto para permitir manter seus códigos atuais.
+            if (produtoId.HasValue)
+            {
+                produtos = produtos.Where(produto => produto.Id != produtoId.Value);
+            }
+
+            return await produtos
+                .SelectMany(produto => produto.CodigosBarras)
+                .Where(codigo => codigosNormalizados.Contains(codigo.CodigoBarras))
+                .Select(codigo => codigo.CodigoBarras)
+                .Distinct()
+                .ToListAsync(cancellationToken);
+        }
+
         /// <summary>
         /// Retorna de forma assíncrona uma lista somente leitura com todos os produtos cadastrados.
         /// Utiliza o modo <c>AsNoTracking</c> para otimizar consultas de leitura sem rastreamento de estado.

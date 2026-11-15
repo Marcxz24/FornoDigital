@@ -27,6 +27,20 @@ namespace FornoDigitalDomain.Repositories.Produtos
         Task<bool> ExisteComNomeAsync(string nome, Guid? ignorarProdutoId = null);
 
         /// <summary>
+        /// Retorna os códigos informados que já estão associados a outro produto.
+        /// </summary>
+        /// <param name="codigosBarras">Códigos a verificar.</param>
+        /// <param name="ignorarProdutoId">
+        /// ID do produto editado, que deve ser ignorado na verificação; nulo no cadastro.
+        /// </param>
+        /// <param name="cancellationToken">Token para cancelar a consulta.</param>
+        /// <returns>Os códigos encontrados em outros produtos.</returns>
+        Task<IReadOnlyList<string>> ObterCodigosBarrasEmUsoAsync(
+            IReadOnlyCollection<string> codigosBarras,
+            Guid? produtoId = null,
+            CancellationToken cancellationToken = default);
+
+        /// <summary>
         /// Retorna de forma assíncrona uma lista somente leitura contendo todos os produtos cadastrados no sistema.
         /// </summary>
         /// <returns>Uma tarefa que representa a operação assíncrona, contendo uma lista somente leitura de <see cref="Produto"/>.</returns>

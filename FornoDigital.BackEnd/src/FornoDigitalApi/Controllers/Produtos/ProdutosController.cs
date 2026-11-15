@@ -65,7 +65,8 @@ namespace FornoDigitalApi.Controllers.Produtos
                     UnidadeMedida: request.UnidadeMedida,
                     ControlaEstoque: request.ControlaEstoque,
                     Descricao: request.Descricao,
-                    QuantidadeEstoque: request.QuantidadeEstoque);
+                    QuantidadeEstoque: request.QuantidadeEstoque,
+                    CodigosBarras: request.CodigosBarras);
 
                 var produto = await _cadastrarProdutoHandler.CadastrarAsync(command);
 
@@ -116,6 +117,9 @@ namespace FornoDigitalApi.Controllers.Produtos
         /// <response code="400">ID ou dados inválidos.</response>
         /// <response code="404">Produto não encontrado.</response>
         /// <response code="409">Outro produto já utiliza esse nome.</response>
+        /// <response code="409">
+        /// Outro produto já utiliza o nome ou algum código de barras informado.
+        /// </response>
         [HttpPut("{id}/editar")]
         [ProducesResponseType(typeof(ProdutoResponse), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
@@ -134,7 +138,8 @@ namespace FornoDigitalApi.Controllers.Produtos
                     Preco: request.Preco,
                     UnidadeMedida: request.UnidadeMedida,
                     ControlaEstoque: request.ControlaEstoque,
-                    QuantidadeEstoque: request.QuantidadeEstoque);
+                    QuantidadeEstoque: request.QuantidadeEstoque,
+                    CodigosBarras: request.CodigosBarras);
 
                 var produto = await _editarProdutoHandler.EditarAsync(command);
                 if (produto is null)
@@ -153,7 +158,7 @@ namespace FornoDigitalApi.Controllers.Produtos
             {
                 return Conflict(new ProblemDetails
                 {
-                    Title = "Já existe outro produto com esse nome.",
+                    Title = "Não foi possível editar o produto.",
                     Detail = exception.Message,
                     Status = StatusCodes.Status409Conflict
                 });
@@ -211,6 +216,9 @@ namespace FornoDigitalApi.Controllers.Produtos
             Descricao: produto.Descricao,
             QuantidadeEstoque: produto.QuantidadeEstoque,
             TemEstoque: produto.TemEstoque,
+            CodigosBarras: produto.CodigosBarras
+                .Select(codigo => codigo.CodigoBarras)
+                .ToList(),
             DataCriacao: produto.DataCriacao,
             DataAtualizacao: produto.DataAtualizacao);
     }

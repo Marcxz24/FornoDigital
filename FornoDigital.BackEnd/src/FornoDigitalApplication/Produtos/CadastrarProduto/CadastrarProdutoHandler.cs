@@ -7,31 +7,37 @@ using System.Text;
 namespace FornoDigitalApplication.Produtos.CadastrarProduto
 {
     /// <summary>
-    /// Manipulador (Handler) responsável por processar o caso de uso de cadastro e persistência 
-    /// de um novo produto no sistema, instanciando a entidade de domínio e delegando o salvamento ao repositório.
+    /// Processa o cadastro de um produto e solicita sua persistência ao repositório.
     /// </summary>
     public sealed class CadastrarProdutoHandler
     {
         private readonly IProdutoRepository _produtoRepository;
 
         /// <summary>
-        /// Inicializa uma nova instância da classe <see cref="CadastrarProdutoHandler"/>.
+        /// Inicializa o handler com o repositório de produtos.
         /// </summary>
-        /// <param name="produtoRepository">Repositório injetado para gerenciar o acesso e a persistência dos dados dos produtos.</param>
+        /// <param name="produtoRepository">Repositório usado para consultar e salvar produtos.</param>
         public CadastrarProdutoHandler(IProdutoRepository produtoRepository)
         {
             _produtoRepository = produtoRepository;
         }
 
         /// <summary>
-        /// Executa assincronamente a lógica de negócio para instanciar, validar e persistir um novo produto 
-        /// com base nos dados fornecidos pelo comando de entrada.
+        /// Cria e persiste um produto com seus códigos de barras iniciais.
         /// </summary>
-        /// <param name="command">O comando (<see cref="CadastrarProdutoCommand"/>) contendo as informações para o cadastro do produto.</param>
-        /// <returns>Uma tarefa que retorna a entidade <see cref="Produto"/> recém-criada e persistida no banco de dados.</returns>
-        /// <exception cref="ArgumentNullException">Lançado se o objeto <paramref name="command"/> for nulo.</exception>
-        /// <exception cref="ArgumentException">Lançado se o nome for inválido ou se houver quantidade informada sem o controle de estoque ativo.</exception>
-        /// <exception cref="ArgumentOutOfRangeException">Lançado se o preço for menor/igual a zero, se a quantidade for negativa ou se a unidade de medida for inválida.</exception>
+        /// <param name="command">Dados necessários para o cadastro.</param>
+        /// <returns>O produto criado.</returns>
+        /// <exception cref="ArgumentNullException">Lançada se o comando for nulo.</exception>
+        /// <exception cref="ArgumentException">
+        /// Lançada se os dados do produto forem inválidos ou se a lista contiver códigos repetidos.
+        /// </exception>
+        /// <exception cref="ArgumentOutOfRangeException">
+        /// Lançada se o preço, a quantidade ou a unidade de medida forem inválidos.
+        /// </exception>
+        /// <exception cref="InvalidOperationException">
+        /// Lançada se já existir outro produto com o mesmo nome ou se algum código de barras
+        /// informado já estiver associado a outro produto.
+        /// </exception>
         public async Task<Produto> CadastrarAsync(CadastrarProdutoCommand command)
         {
             ArgumentNullException.ThrowIfNull(command);
@@ -42,6 +48,21 @@ namespace FornoDigitalApplication.Produtos.CadastrarProduto
                     $"Já existe um produto cadastrado com o nome '{command.Nome.Trim()}'.");
             }
 
+            var codigosBarras = command.CodigosBarras ?? Array.Empty<string>();
+
+            if (codigosBarras.Count > 0)
+            {
+                var codigosEmUso =
+                    await _produtoRepository.ObterCodigosBarrasEmUsoAsync(codigosBarras);
+
+                if (codigosEmUso.Count > 0)
+                {
+                    throw new InvalidOperationException(
+                        $"Os seguintes códigos de barras já estão associados a outro produto: " +
+                        $"{string.Join(", ", codigosEmUso)}.");
+                }
+            }
+
             var produto = new Produto(
                 nome: command.Nome,
                 descricao: command.Descricao,
@@ -49,7 +70,8 @@ namespace FornoDigitalApplication.Produtos.CadastrarProduto
                 disponivel: command.Disponivel,
                 unidadeMedida: command.UnidadeMedida,
                 controlaEstoque: command.ControlaEstoque,
-                quantidadeEstoque: command.QuantidadeEstoque);
+                quantidadeEstoque: command.QuantidadeEstoque,
+                codigosBarras: command.CodigosBarras);
 
             await _produtoRepository.AdicionarAsync(produto);
 
