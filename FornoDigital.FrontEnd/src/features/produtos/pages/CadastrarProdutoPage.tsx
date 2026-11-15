@@ -19,7 +19,7 @@ export function CadastrarProdutoPage({
   onToggleTheme,
   onNavigate,
 }: CadastrarProdutoPageProps) {
-  const { salvando, cadastrar } = useProdutosData();
+  const { salvando, cadastrar } = useProdutosData({ carregarCatalogo: false });
 
   /**
    * Envia o pedido ao hook. Se a API rejeitar, exibe uma notificação
@@ -85,7 +85,6 @@ export function CadastrarProdutoPage({
       <ProdutoForm
         produto={null}
         salvando={salvando}
-        erroApi={null}
         onSubmit={enviarCadastro}
         onSuccess={concluirCadastro}
         onCancel={() => onNavigate("listar-produtos")}

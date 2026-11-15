@@ -429,6 +429,16 @@
   color: var(--danger);
 }
 
+.client-icon-button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.client-icon-button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
 .client-record-details {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

@@ -23,13 +23,13 @@ export function ClientesPage({
   onNavigate,
 }: ClientesPageProps) {
   const {
-    clientes: estadoClientes,
+    lista,
     salvando,
+    excluindoId,
     cadastrar,
     atualizar,
     remover,
-    recarregar,
-  } = useClientesData();
+  } = useClientesData({ carregarLista: paginaAtiva === "listar-clientes" });
 
   const [modoFormulario, setModoFormulario] = useState<
     "fechado" | "novo" | "editar"
@@ -199,12 +199,24 @@ export function ClientesPage({
 
       {paginaAtiva === "listar-clientes" && modoFormulario === "fechado" && (
         <ListaClientes
-          clientes={estadoClientes.data}
-          carregando={estadoClientes.loading}
-          erro={estadoClientes.error}
+          clientes={lista.itens}
+          totalRegistros={lista.totalRegistros}
+          pagina={lista.pagina}
+          totalPaginas={lista.totalPaginas}
+          tamanhoPagina={lista.tamanhoPagina}
+          possuiDados={lista.possuiDados}
+          carregando={lista.carregando}
+          erro={lista.erro}
+          termoBusca={lista.termoBusca}
+          buscaAplicada={lista.buscaAplicada}
+          ordenacao={lista.ordenacao}
+          excluindoId={excluindoId}
+          onBuscaChange={lista.alterarBusca}
+          onOrdenar={lista.ordenarPor}
+          onMudarPagina={lista.irParaPagina}
           onEditar={abrirEdicao}
           onExcluir={solicitarExclusao}
-          onRecarregar={recarregar}
+          onRecarregar={lista.recarregar}
         />
       )}
     </main>

@@ -44,3 +44,13 @@ export interface ClienteRequest {
   cidade: string | null;
   estado: string | null;
 }
+
+/**
+ * Campos aceitos pela API para ordenar a listagem de clientes.
+ */
+export type OrdenacaoCliente = "nome" | "cidade" | "dataCadastro";
+
+/**
+ * A listagem de clientes não possui filtros além da busca.
+ */
+export type FiltroCliente = never;

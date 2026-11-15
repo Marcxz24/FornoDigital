@@ -1,8 +1,6 @@
-export type FiltroProduto =
-  | "todos"
-  | "disponiveis"
-  | "indisponiveis"
-  | "estoque-zerado";
+import type { FiltroProduto } from "../types/produto";
+
+export type { FiltroProduto };
 
 interface ProdutoFiltersProps {
   termoBusca: string;
@@ -20,7 +18,7 @@ const filtros: { valor: FiltroProduto; rotulo: string }[] = [
 
 /**
  * Renderiza a busca e os filtros de apresentação do catálogo.
- * A página recebe as mudanças e aplica os filtros aos produtos carregados.
+ * A página recebe as mudanças e a API aplica busca e filtros no banco de dados.
  */
 export function ProdutoFilters({
   termoBusca,
@@ -42,8 +40,9 @@ export function ProdutoFilters({
         <input
           type="search"
           value={termoBusca}
+          maxLength={100}
           onChange={(event) => onTermoBuscaChange(event.target.value)}
-          placeholder="Buscar por nome ou descrição"
+          placeholder="Buscar por nome, descrição ou código de barras"
         />
       </label>
 

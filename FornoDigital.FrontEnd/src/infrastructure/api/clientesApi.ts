@@ -1,7 +1,14 @@
 import type {
   Cliente,
   ClienteRequest,
+  FiltroCliente,
+  OrdenacaoCliente,
 } from "../../features/clientes/types/cliente";
+import type {
+  ParametrosListagem,
+  ResultadoPaginado,
+} from "../../shared/types/paginacao";
+import { montarQueryString } from "../../shared/utils/paginacao";
 import {
   deleteRequest,
   getJson,
@@ -10,10 +17,29 @@ import {
 } from "./httpClient";
 
 /**
- * Busca a lista de clientes cadastrados.
+ * Busca a lista completa de clientes cadastrados.
+ * Usada pelo registro de vendas e pelo dashboard.
  */
 export function listarClientes(): Promise<Cliente[]> {
   return getJson<Cliente[]>("/api/clientes/listar");
+}
+
+/**
+ * Busca uma página de clientes. Busca, ordenação e paginação
+ * são executadas pela API no banco de dados.
+ */
+export function listarClientesPaginado(
+  parametros: ParametrosListagem<OrdenacaoCliente, FiltroCliente>,
+): Promise<ResultadoPaginado<Cliente>> {
+  const query = montarQueryString({
+    page: parametros.pagina,
+    pageSize: parametros.tamanhoPagina,
+    search: parametros.busca,
+    sortBy: parametros.ordenacao.campo,
+    sortDirection: parametros.ordenacao.direcao,
+  });
+
+  return getJson<ResultadoPaginado<Cliente>>(`/api/clientes${query}`);
 }
 
 /**

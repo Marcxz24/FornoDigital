@@ -3,12 +3,11 @@ import type {
   Cliente,
   ClienteRequest,
 } from "../types/cliente";
-import { ErrorState } from "../../../shared/components/ErrorState";
 
 interface ClienteFormProps {
   cliente: Cliente | null;
   salvando: boolean;
-  erroApi: string | null;
+  erroApi?: string | null;
   onSubmit: (request: ClienteRequest) => Promise<Cliente>;
   onSuccess: (cliente: Cliente) => void;
   onCancel: () => void;
@@ -120,7 +119,6 @@ function criarRequisicao(valores: ClienteFormValues): ClienteRequest {
 export function ClienteForm({
   cliente,
   salvando,
-  erroApi,
   onSubmit,
   onSuccess,
   onCancel,
@@ -197,7 +195,7 @@ export function ClienteForm({
       const clienteSalvo = await onSubmit(request);
       onSuccess(clienteSalvo);
     } catch {
-      // A mensagem de validação ou falha da API é apresentada por erroApi.
+      // A página apresenta a falha usando uma notificação SweetAlert2.
     }
   }
 
@@ -367,8 +365,6 @@ export function ClienteForm({
             </label>
           </div>
         </div>
-
-        {erroApi && <ErrorState message={erroApi} />}
 
         <div className="client-form-actions">
           <button

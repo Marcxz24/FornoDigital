@@ -1,176 +1,97 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   cadastrarCliente,
   editarCliente,
   excluirCliente,
-  listarClientes,
+  listarClientesPaginado,
 } from "../../../infrastructure/api/clientesApi";
+import { useListagemPaginada } from "../../../shared/hooks/useListagemPaginada";
 import type {
   Cliente,
   ClienteRequest,
+  FiltroCliente,
+  OrdenacaoCliente,
 } from "../types/cliente";
 
-interface ClientesState {
-  data: Cliente[];
-  loading: boolean;
-  error: string | null;
+interface OpcoesClientesData {
+  /** Quando falso, a listagem paginada não é consultada (por exemplo, na tela de cadastro). */
+  carregarLista?: boolean;
 }
 
-function obterMensagemErro(error: unknown): string {
-  return error instanceof Error
-    ? error.message
-    : "Ocorreu um erro inesperado ao processar os clientes.";
-}
-
-export function useClientesData() {
-  const [clientes, setClientes] = useState<ClientesState>({
-    data: [],
-    loading: true,
-    error: null,
+/**
+ * Coordena a listagem paginada de clientes e as operações de cadastro,
+ * edição e exclusão. A busca, a ordenação e a paginação são feitas pela API;
+ * após cada operação concluída, a página atual é consultada novamente.
+ */
+export function useClientesData({ carregarLista = true }: OpcoesClientesData = {}) {
+  const lista = useListagemPaginada<Cliente, OrdenacaoCliente, FiltroCliente>({
+    carregar: listarClientesPaginado,
+    ordenacaoInicial: { campo: "nome", direcao: "asc" },
+    filtroInicial: null,
+    mensagemErroPadrao: "Ocorreu um erro inesperado ao carregar os clientes.",
+    habilitado: carregarLista,
   });
+  const { recarregar } = lista;
   const [salvando, setSalvando] = useState(false);
   const [excluindoId, setExcluindoId] = useState<string | null>(null);
-  const [erroOperacao, setErroOperacao] = useState<string | null>(null);
 
-    /**
-   * Busca novamente os clientes na API.
-   * Marca o estado como carregando, atualiza a lista em caso de sucesso
-   * e guarda a mensagem da API caso a requisição falhe.
+  /**
+   * Cadastra um cliente e atualiza a página exibida.
+   * Em caso de falha, propaga o erro para a página notificar.
    */
-  async function recarregar() {
-    setClientes((estadoAtual) => ({
-      ...estadoAtual,
-      loading: true,
-      error: null,
-    }));
-
-    try {
-      const data = await listarClientes();
-
-      setClientes({
-        data,
-        loading: false,
-        error: null,
-      });
-    } catch (error: unknown) {
-      setClientes({
-        data: [],
-        loading: false,
-        error: obterMensagemErro(error),
-      });
-    }
-  }
-
-  useEffect(() => {
-    let ativo = true;
-
-    listarClientes().then(
-      (data) => {
-        if (ativo) {
-          setClientes({
-            data,
-            loading: false,
-            error: null,
-          });
-        }
-      },
-      (error: unknown) => {
-        if (ativo) {
-          setClientes({
-            data: [],
-            loading: false,
-            error: obterMensagemErro(error),
-          });
-        }
-      },
-    );
-
-    return () => {
-      ativo = false;
-    };
-  }, []);
-
   async function cadastrar(request: ClienteRequest): Promise<Cliente> {
     setSalvando(true);
-    setErroOperacao(null);
 
     try {
       const clienteCriado = await cadastrarCliente(request);
-
-      setClientes((estadoAtual) => ({
-        ...estadoAtual,
-        data: [
-          clienteCriado,
-          ...estadoAtual.data.filter(
-            (cliente) => cliente.id !== clienteCriado.id,
-          ),
-        ],
-      }));
+      recarregar();
 
       return clienteCriado;
-    } catch (error: unknown) {
-      setErroOperacao(obterMensagemErro(error));
-      throw error;
     } finally {
       setSalvando(false);
     }
   }
 
+  /**
+   * Edita um cliente e atualiza a página exibida com os dados da API.
+   */
   async function atualizar(
     id: string,
     request: ClienteRequest,
   ): Promise<Cliente> {
     setSalvando(true);
-    setErroOperacao(null);
 
     try {
       const clienteAtualizado = await editarCliente(id, request);
-
-      setClientes((estadoAtual) => ({
-        ...estadoAtual,
-        data: estadoAtual.data.map((cliente) =>
-          cliente.id === clienteAtualizado.id
-            ? clienteAtualizado
-            : cliente,
-        ),
-      }));
+      recarregar();
 
       return clienteAtualizado;
-    } catch (error: unknown) {
-      setErroOperacao(obterMensagemErro(error));
-      throw error;
     } finally {
       setSalvando(false);
     }
   }
 
+  /**
+   * Exclui um cliente e consulta novamente a página atual.
+   * Se a página ficar vazia, a listagem passa para a última página existente.
+   */
   async function remover(id: string): Promise<void> {
     setExcluindoId(id);
-    setErroOperacao(null);
 
     try {
       await excluirCliente(id);
-
-      setClientes((estadoAtual) => ({
-        ...estadoAtual,
-        data: estadoAtual.data.filter((cliente) => cliente.id !== id),
-      }));
-    } catch (error: unknown) {
-      setErroOperacao(obterMensagemErro(error));
-      throw error;
+      recarregar();
     } finally {
       setExcluindoId(null);
     }
   }
 
-    return {
-    clientes,
+  return {
+    lista,
     salvando,
     excluindoId,
-    erroOperacao,
     cadastrar,
     atualizar,
     remover,
-    recarregar,
   };
 }

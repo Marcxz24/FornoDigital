@@ -4,15 +4,20 @@ import type {
   ProdutoRequest,
   UnidadeMedidaCodigo,
 } from "../types/produto";
-import { ErrorState } from "../../../shared/components/ErrorState";
 
 interface ProdutoFormProps {
   produto: Produto | null;
   salvando: boolean;
-  erroApi: string | null;
   onSubmit: (request: ProdutoRequest) => Promise<Produto>;
   onSuccess: (produto: Produto) => void;
   onCancel: () => void;
+  /** Código cadastrado cuja remoção está em andamento na API. */
+  codigoBarrasEmRemocao?: string | null;
+  /**
+   * Na edição, confirma e remove pela API um código já cadastrado.
+   * Deve retornar true somente quando a API confirmar a remoção.
+   */
+  onRemoverCodigoBarrasSalvo?: (codigoBarras: string) => Promise<boolean>;
 }
 
 interface ValoresFormulario {
@@ -23,6 +28,7 @@ interface ValoresFormulario {
   disponivel: boolean;
   controlaEstoque: boolean;
   quantidadeEstoque: string;
+  /** Códigos novos digitados no formulário, ainda não gravados. */
   codigosBarras: string[];
 }
 
@@ -32,6 +38,8 @@ type ErrosFormulario = Partial<Record<CampoFormulario, string>>;
 /**
  * Prepara os campos a partir do produto escolhido.
  * No cadastro inicia valores vazios, disponível e sem códigos de barras.
+ * Na edição, os códigos já cadastrados ficam em uma lista própria
+ * (veja codigosSalvos) e esta coleção recebe apenas os códigos novos.
  */
 function criarValoresIniciais(produto: Produto | null): ValoresFormulario {
   return {
@@ -49,7 +57,7 @@ function criarValoresIniciais(produto: Produto | null): ValoresFormulario {
       produto?.quantidadeEstoque === undefined
         ? ""
         : String(produto.quantidadeEstoque),
-    codigosBarras: produto?.codigosBarras ?? [],
+    codigosBarras: [],
   };
 }
 
@@ -71,13 +79,18 @@ function converterPreco(valor: string): number | null {
 
 /**
  * Valida os campos antes de enviar o formulário.
- * Códigos vazios e repetidos são indicados visualmente; a API continua
- * responsável pela validação final, inclusive contra códigos já cadastrados.
+ * Códigos vazios e repetidos (inclusive em relação aos já cadastrados) são
+ * indicados visualmente; a API continua responsável pela validação final,
+ * inclusive contra códigos de outros produtos.
  */
-function validarFormulario(valores: ValoresFormulario): ErrosFormulario {
+function validarFormulario(
+  valores: ValoresFormulario,
+  codigosSalvos: string[],
+): ErrosFormulario {
   const erros: ErrosFormulario = {};
   const preco = converterPreco(valores.preco);
-  const codigosBarras = valores.codigosBarras.map((codigo) => codigo.trim());
+  const codigosNovos = valores.codigosBarras.map((codigo) => codigo.trim());
+  const todosCodigos = [...codigosSalvos, ...codigosNovos];
 
   if (!valores.nome.trim()) {
     erros.nome = "Informe o nome do produto.";
@@ -103,10 +116,10 @@ function validarFormulario(valores: ValoresFormulario): ErrosFormulario {
     }
   }
 
-  if (codigosBarras.some((codigo) => codigo.length === 0)) {
+  if (codigosNovos.some((codigo) => codigo.length === 0)) {
     erros.codigosBarras =
       "Preencha ou remova as linhas vazias de código de barras.";
-  } else if (new Set(codigosBarras).size !== codigosBarras.length) {
+  } else if (new Set(todosCodigos).size !== todosCodigos.length) {
     erros.codigosBarras = "Remova os códigos de barras repetidos.";
   }
 
@@ -117,8 +130,13 @@ function validarFormulario(valores: ValoresFormulario): ErrosFormulario {
  * Monta o pedido de cadastro ou edição.
  * Converte valores numéricos e remove espaços externos dos códigos,
  * sem converter os códigos para números nem remover zeros à esquerda.
+ * Na edição, envia os códigos ainda cadastrados seguidos dos novos, pois a
+ * API substitui a coleção completa de códigos do produto.
  */
-function criarRequisicao(valores: ValoresFormulario): ProdutoRequest {
+function criarRequisicao(
+  valores: ValoresFormulario,
+  codigosSalvos: string[],
+): ProdutoRequest {
   const preco = converterPreco(valores.preco);
 
   if (preco === null) {
@@ -138,7 +156,10 @@ function criarRequisicao(valores: ValoresFormulario): ProdutoRequest {
     unidadeMedida: valores.unidadeMedida,
     controlaEstoque: valores.controlaEstoque,
     quantidadeEstoque,
-    codigosBarras: valores.codigosBarras.map((codigo) => codigo.trim()),
+    codigosBarras: [
+      ...codigosSalvos,
+      ...valores.codigosBarras.map((codigo) => codigo.trim()),
+    ],
   };
 }
 
@@ -150,17 +171,29 @@ function criarRequisicao(valores: ValoresFormulario): ProdutoRequest {
 export function ProdutoForm({
   produto,
   salvando,
-  erroApi,
   onSubmit,
   onSuccess,
   onCancel,
+  codigoBarrasEmRemocao = null,
+  onRemoverCodigoBarrasSalvo,
 }: ProdutoFormProps) {
   const [valores, setValores] = useState<ValoresFormulario>(() =>
     criarValoresIniciais(produto),
   );
   const [erros, setErros] = useState<ErrosFormulario>({});
 
+  // Códigos já gravados no produto em edição. Só deixam a lista depois
+  // que a API confirma a remoção.
+  const [codigosSalvos, setCodigosSalvos] = useState<string[]>(
+    () => produto?.codigosBarras ?? [],
+  );
+
   const estaEditando = produto !== null;
+  const removendoCodigo = codigoBarrasEmRemocao !== null;
+  const codigosAtuais = [
+    ...codigosSalvos,
+    ...valores.codigosBarras.map((codigo) => codigo.trim()),
+  ];
 
   /**
    * Atualiza um campo e remove a mensagem de validação anterior daquele campo.
@@ -217,17 +250,49 @@ export function ProdutoForm({
   }
 
   /**
+   * Remove um código já cadastrado. A página confirma a ação, chama a API
+   * e notifica o resultado; a lista só é atualizada após a confirmação da API.
+   * Os demais campos do formulário não são salvos por esta ação.
+   */
+  async function removerCodigoSalvo(codigoBarras: string) {
+    if (!onRemoverCodigoBarrasSalvo || salvando || removendoCodigo) {
+      return;
+    }
+
+    const removido = await onRemoverCodigoBarrasSalvo(codigoBarras);
+
+    if (!removido) {
+      return;
+    }
+
+    setCodigosSalvos((atuais) =>
+      atuais.filter((codigo) => codigo !== codigoBarras),
+    );
+
+    setErros((atuais) => {
+      if (!atuais.codigosBarras) {
+        return atuais;
+      }
+
+      const novosErros = { ...atuais };
+      delete novosErros.codigosBarras;
+
+      return novosErros;
+    });
+  }
+
+  /**
    * Impede envios repetidos, valida os campos e chama o cadastro ou edição.
    * Em caso de falha, mantém os valores para uma nova tentativa.
    */
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (salvando) {
+    if (salvando || removendoCodigo) {
       return;
     }
 
-    const errosEncontrados = validarFormulario(valores);
+    const errosEncontrados = validarFormulario(valores, codigosSalvos);
     setErros(errosEncontrados);
 
     if (Object.keys(errosEncontrados).length > 0) {
@@ -235,10 +300,12 @@ export function ProdutoForm({
     }
 
     try {
-      const produtoSalvo = await onSubmit(criarRequisicao(valores));
+      const produtoSalvo = await onSubmit(
+        criarRequisicao(valores, codigosSalvos),
+      );
       onSuccess(produtoSalvo);
     } catch {
-      // A página apresenta a mensagem retornada pela API em erroApi.
+      // A página apresenta a falha usando uma notificação SweetAlert2.
     }
   }
 
@@ -293,6 +360,56 @@ export function ProdutoForm({
               <span className="product-field-optional">(opcional)</span>
             </span>
 
+            {estaEditando && (
+              <section
+                className="product-catalog-barcodes product-form-saved-barcodes"
+                aria-label="Códigos de barras cadastrados"
+              >
+                <h4>Cadastrados</h4>
+
+                {codigosSalvos.length === 0 ? (
+                  <p className="product-catalog-no-barcodes">
+                    Nenhum código cadastrado.
+                  </p>
+                ) : (
+                  <ul>
+                    {codigosSalvos.map((codigoBarras) => (
+                      <li key={codigoBarras}>
+                        <code>{codigoBarras}</code>
+
+                        <button
+                          className="product-card-action product-card-action-danger"
+                          type="button"
+                          onClick={() => void removerCodigoSalvo(codigoBarras)}
+                          disabled={
+                            salvando ||
+                            removendoCodigo ||
+                            !onRemoverCodigoBarrasSalvo
+                          }
+                          aria-label={`Remover o código de barras ${codigoBarras}`}
+                        >
+                          {codigoBarrasEmRemocao === codigoBarras
+                            ? "Removendo..."
+                            : "Remover"}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                <small className="product-field-optional">
+                  A remoção de um código cadastrado é gravada imediatamente,
+                  sem depender do botão de salvar.
+                </small>
+              </section>
+            )}
+
+            {estaEditando && valores.codigosBarras.length > 0 && (
+              <span className="product-field-optional">
+                Novos códigos (gravados ao salvar as alterações)
+              </span>
+            )}
+
             <div className="product-barcode-list">
               {valores.codigosBarras.map((codigo, indice) => (
                 <div className="product-barcode-row" key={indice}>
@@ -307,9 +424,8 @@ export function ProdutoForm({
                     aria-invalid={Boolean(
                       erros.codigosBarras &&
                         (codigo.trim().length === 0 ||
-                          valores.codigosBarras
-                            .map((item) => item.trim())
-                            .filter((item) => item === codigo.trim()).length > 1),
+                          codigosAtuais.filter((item) => item === codigo.trim())
+                            .length > 1),
                     )}
                     autoComplete="off"
                     spellCheck={false}
@@ -321,6 +437,7 @@ export function ProdutoForm({
                     type="button"
                     onClick={() => removerCodigoBarrasDoFormulario(indice)}
                     disabled={salvando}
+                    title="Remover esta linha (o código ainda não foi gravado)"
                     aria-label={`Remover código de barras ${indice + 1}`}
                   >
                     Remover
@@ -448,8 +565,6 @@ export function ProdutoForm({
           )}
         </div>
 
-        {erroApi && <ErrorState message={erroApi} />}
-
         <div className="product-form-actions">
           <button
             className="sale-secondary-button"
@@ -463,7 +578,7 @@ export function ProdutoForm({
           <button
             className="sale-primary-button"
             type="submit"
-            disabled={salvando}
+            disabled={salvando || removendoCodigo}
           >
             {salvando
               ? estaEditando

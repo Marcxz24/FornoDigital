@@ -595,6 +595,36 @@
   font-size: 0.78rem;
 }
 
+/* Códigos já cadastrados exibidos no formulário de edição */
+.product-form-saved-barcodes {
+  margin-top: 0;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--border);
+  border-radius: 0.65rem;
+  background: var(--surface-raised);
+}
+
+.product-form-saved-barcodes small {
+  font-size: 0.74rem;
+}
+
+/* Código de barras principal exibido na grid do catálogo */
+.product-grid-barcode {
+  padding: 0.2rem 0.45rem;
+  border: 1px solid var(--border);
+  border-radius: 0.4rem;
+  background: var(--surface-inset);
+  color: var(--text-secondary);
+  font-size: 0.76rem;
+}
+
+.product-grid-barcode-more {
+  margin-left: 0.4rem;
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+
 /* Mantém os campos e códigos utilizáveis em telas estreitas */
 @media (max-width: 600px) {
   .product-barcode-row {

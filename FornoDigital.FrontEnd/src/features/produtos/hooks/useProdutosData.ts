@@ -1,44 +1,41 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   alterarDisponibilidadeProduto,
   cadastrarProduto,
   editarProduto,
-  listarProdutos,
+  listarProdutosPaginado,
   removerCodigoBarrasProduto,
 } from "../../../infrastructure/api/produtosApi";
+import { useListagemPaginada } from "../../../shared/hooks/useListagemPaginada";
 import type {
   AlterarDisponibilidadeProdutoRequest,
   EditarProdutoRequest,
+  FiltroProduto,
+  OrdenacaoProduto,
   Produto,
   ProdutoRequest,
 } from "../types/produto";
 
-interface ProdutosState {
-  data: Produto[];
-  loading: boolean;
-  error: string | null;
+interface OpcoesProdutosData {
+  /** Quando falso, o catálogo paginado não é consultado (por exemplo, na tela de cadastro). */
+  carregarCatalogo?: boolean;
 }
 
 /**
- * Converte uma falha desconhecida em uma mensagem que possa ser exibida.
+ * Coordena o catálogo paginado e as operações de cadastro, edição,
+ * disponibilidade e remoção individual de códigos de barras.
+ * Busca, filtro, ordenação e paginação são feitos pela API; após cada
+ * operação concluída, a página atual é consultada novamente.
  */
-function obterMensagemErro(error: unknown): string {
-  return error instanceof Error
-    ? error.message
-    : "Ocorreu um erro inesperado ao processar os produtos.";
-}
-
-/**
- * Carrega produtos e coordena cadastro, edição, disponibilidade
- * e remoção individual de códigos de barras.
- * As chamadas HTTP são delegadas às funções de produtosApi.
- */
-export function useProdutosData() {
-  const [produtos, setProdutos] = useState<ProdutosState>({
-    data: [],
-    loading: true,
-    error: null,
+export function useProdutosData({ carregarCatalogo = true }: OpcoesProdutosData = {}) {
+  const catalogo = useListagemPaginada<Produto, OrdenacaoProduto, FiltroProduto>({
+    carregar: listarProdutosPaginado,
+    ordenacaoInicial: { campo: "nome", direcao: "asc" },
+    filtroInicial: "todos",
+    mensagemErroPadrao: "Ocorreu um erro inesperado ao carregar os produtos.",
+    habilitado: carregarCatalogo,
   });
+  const { recarregar } = catalogo;
   const [salvando, setSalvando] = useState(false);
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [alterandoDisponibilidadeId, setAlterandoDisponibilidadeId] =
@@ -46,205 +43,92 @@ export function useProdutosData() {
   const [codigoBarrasEmRemocao, setCodigoBarrasEmRemocao] = useState<
     string | null
   >(null);
-  const [erroOperacao, setErroOperacao] = useState<string | null>(null);
 
   /**
-   * Busca novamente a lista e atualiza o estado de carregamento,
-   * de dados ou de erro conforme o resultado da API.
-   */
-  async function recarregar() {
-    setProdutos((estadoAtual) => ({
-      ...estadoAtual,
-      loading: true,
-      error: null,
-    }));
-
-    try {
-      const data = await listarProdutos();
-
-      setProdutos({
-        data,
-        loading: false,
-        error: null,
-      });
-    } catch (error: unknown) {
-      setProdutos({
-        data: [],
-        loading: false,
-        error: obterMensagemErro(error),
-      });
-    }
-  }
-
-  /**
-   * Carrega os produtos quando o hook é iniciado.
-   * A variável ativo impede atualizar o estado após o componente ser desmontado.
-   */
-  useEffect(() => {
-    let ativo = true;
-
-    listarProdutos().then(
-      (data) => {
-        if (ativo) {
-          setProdutos({
-            data,
-            loading: false,
-            error: null,
-          });
-        }
-      },
-      (error: unknown) => {
-        if (ativo) {
-          setProdutos({
-            data: [],
-            loading: false,
-            error: obterMensagemErro(error),
-          });
-        }
-      },
-    );
-
-    return () => {
-      ativo = false;
-    };
-  }, []);
-
-  /**
-   * Cadastra um produto e o insere no início da lista local.
-   * Se houver falha, guarda a mensagem e propaga o erro à página.
+   * Cadastra um produto. Se houver falha, propaga o erro à página.
    */
   async function cadastrar(request: ProdutoRequest): Promise<Produto> {
     setSalvando(true);
-    setErroOperacao(null);
 
     try {
       const produtoCriado = await cadastrarProduto(request);
 
-      setProdutos((estadoAtual) => ({
-        ...estadoAtual,
-        data: [
-          produtoCriado,
-          ...estadoAtual.data.filter(
-            (produto) => produto.id !== produtoCriado.id,
-          ),
-        ],
-      }));
+      if (carregarCatalogo) {
+        recarregar();
+      }
 
       return produtoCriado;
-    } catch (error: unknown) {
-      setErroOperacao(obterMensagemErro(error));
-      throw error;
     } finally {
       setSalvando(false);
     }
   }
 
   /**
-   * Edita os dados do produto e substitui sua versão na lista local
-   * pela resposta atualizada retornada pela API.
+   * Edita os dados do produto e consulta novamente a página do catálogo.
    */
   async function atualizar(
     id: string,
     request: EditarProdutoRequest,
   ): Promise<Produto> {
     setEditandoId(id);
-    setErroOperacao(null);
 
     try {
       const produtoAtualizado = await editarProduto(id, request);
-
-      setProdutos((estadoAtual) => ({
-        ...estadoAtual,
-        data: estadoAtual.data.map((produto) =>
-          produto.id === produtoAtualizado.id ? produtoAtualizado : produto,
-        ),
-      }));
+      recarregar();
 
       return produtoAtualizado;
-    } catch (error: unknown) {
-      setErroOperacao(obterMensagemErro(error));
-      throw error;
     } finally {
       setEditandoId(null);
     }
   }
 
   /**
-   * Altera a disponibilidade e sincroniza o cartão do produto
-   * com a resposta mais recente da API.
+   * Altera a disponibilidade e consulta novamente a página do catálogo,
+   * respeitando o filtro de situação selecionado.
    */
   async function alterarDisponibilidade(
     id: string,
     request: AlterarDisponibilidadeProdutoRequest,
   ): Promise<Produto> {
     setAlterandoDisponibilidadeId(id);
-    setErroOperacao(null);
 
     try {
       const produtoAtualizado = await alterarDisponibilidadeProduto(id, request);
-
-      setProdutos((estadoAtual) => ({
-        ...estadoAtual,
-        data: estadoAtual.data.map((produto) =>
-          produto.id === produtoAtualizado.id ? produtoAtualizado : produto,
-        ),
-      }));
+      recarregar();
 
       return produtoAtualizado;
-    } catch (error: unknown) {
-      setErroOperacao(obterMensagemErro(error));
-      throw error;
     } finally {
       setAlterandoDisponibilidadeId(null);
     }
   }
 
   /**
-   * Remove um código pela API. Só depois da confirmação HTTP atualiza
-   * a lista local, mantendo o produto no catálogo.
+   * Remove um código pela API. A remoção é gravada imediatamente no banco;
+   * o catálogo é consultado novamente somente após a confirmação HTTP.
    */
   async function removerCodigoBarras(
     produtoId: string,
     codigoBarras: string,
   ): Promise<void> {
     setCodigoBarrasEmRemocao(codigoBarras);
-    setErroOperacao(null);
 
     try {
       await removerCodigoBarrasProduto(produtoId, codigoBarras);
-
-      setProdutos((estadoAtual) => ({
-        ...estadoAtual,
-        data: estadoAtual.data.map((produto) =>
-          produto.id === produtoId
-            ? {
-                ...produto,
-                codigosBarras: produto.codigosBarras.filter(
-                  (codigo) => codigo !== codigoBarras,
-                ),
-              }
-            : produto,
-        ),
-      }));
-    } catch (error: unknown) {
-      setErroOperacao(obterMensagemErro(error));
-      throw error;
+      recarregar();
     } finally {
       setCodigoBarrasEmRemocao(null);
     }
   }
 
   return {
-    produtos,
+    catalogo,
     salvando,
     editandoId,
     alterandoDisponibilidadeId,
     codigoBarrasEmRemocao,
-    erroOperacao,
     cadastrar,
     atualizar,
     alterarDisponibilidade,
     removerCodigoBarras,
-    recarregar,
   };
 }

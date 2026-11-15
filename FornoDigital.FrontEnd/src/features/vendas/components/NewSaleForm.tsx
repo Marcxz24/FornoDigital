@@ -4,6 +4,7 @@ import type { Produto } from "../../produtos/types/produto";
 import { EmptyState } from "../../../shared/components/EmptyState";
 import { ErrorState } from "../../../shared/components/ErrorState";
 import { LoadingState } from "../../../shared/components/LoadingState";
+import { notificar } from "../../../shared/utils/notificacoes";
 import { ProductSearch } from "./ProductSearch";
 import { SaleCart, type ItemCarrinho } from "./SaleCart";
 import { SaleSummary } from "./SaleSummary";
@@ -20,7 +21,6 @@ interface NewSaleFormProps {
   produtosLoading: boolean;
   produtosError: string | null;
   registrando: boolean;
-  erroRegistro: string | null;
   onRegistrar: (request: RegistrarVendaRequest) => Promise<Venda>;
   onSuccess: (venda: Venda) => void;
   onCancel: () => void;
@@ -38,7 +38,6 @@ export function NewSaleForm({
   produtosLoading,
   produtosError,
   registrando,
-  erroRegistro,
   onRegistrar,
   onSuccess,
   onCancel,
@@ -46,7 +45,6 @@ export function NewSaleForm({
   const [clienteId, setClienteId] = useState("");
   const [itensCarrinho, setItensCarrinho] = useState<ItemCarrinho[]>([]);
   const [desconto, setDesconto] = useState("0");
-  const [erroFormulario, setErroFormulario] = useState<string | null>(null);
   const submissaoEmAndamento = useRef(false);
 
   const produtosDisponiveis = produtos.filter(
@@ -83,46 +81,47 @@ export function NewSaleForm({
   /**
    * Adiciona um produto ao carrinho ou incrementa sua quantidade.
    * Quando há controle de estoque, não permite ultrapassar a quantidade disponível.
+   * A verificação ocorre fora do atualizador de estado para que a notificação
+   * seja exibida uma única vez.
    */
   function adicionarProduto(produto: Produto) {
-    setErroFormulario(null);
+    const itemExistente = itensCarrinho.find(
+      (item) => item.produto.id === produto.id,
+    );
 
-    setItensCarrinho((atuais) => {
-      const itemExistente = atuais.find(
-        (item) => item.produto.id === produto.id,
+    if (!itemExistente) {
+      setItensCarrinho((atuais) => [...atuais, { produto, quantidade: "1" }]);
+      return;
+    }
+
+    const quantidadeAtual = Number(itemExistente.quantidade);
+    const quantidadeNova =
+      (Number.isFinite(quantidadeAtual) ? quantidadeAtual : 0) + 1;
+    const estoqueMaximo = produto.controlaEstoque
+      ? produto.quantidadeEstoque ?? 0
+      : null;
+
+    if (estoqueMaximo !== null && quantidadeNova > estoqueMaximo) {
+      void notificar(
+        "warning",
+        `Não há estoque suficiente para adicionar mais "${produto.nome}".`,
       );
+      return;
+    }
 
-      if (!itemExistente) {
-        return [...atuais, { produto, quantidade: "1" }];
-      }
-
-      const quantidadeAtual = Number(itemExistente.quantidade);
-      const quantidadeNova =
-        (Number.isFinite(quantidadeAtual) ? quantidadeAtual : 0) + 1;
-      const estoqueMaximo = produto.controlaEstoque
-        ? produto.quantidadeEstoque ?? 0
-        : null;
-
-      if (estoqueMaximo !== null && quantidadeNova > estoqueMaximo) {
-        setErroFormulario(
-          `Não há estoque suficiente para adicionar mais "${produto.nome}".`,
-        );
-        return atuais;
-      }
-
-      return atuais.map((item) =>
+    setItensCarrinho((atuais) =>
+      atuais.map((item) =>
         item.produto.id === produto.id
           ? { ...item, quantidade: String(quantidadeNova) }
           : item,
-      );
-    });
+      ),
+    );
   }
 
   /**
    * Atualiza a quantidade digitada para o produto correspondente.
    */
   function alterarQuantidade(produtoId: string, quantidade: string) {
-    setErroFormulario(null);
     setItensCarrinho((atuais) =>
       atuais.map((item) =>
         item.produto.id === produtoId ? { ...item, quantidade } : item,
@@ -134,7 +133,6 @@ export function NewSaleForm({
    * Remove do carrinho o produto identificado pelo ID.
    */
   function removerProduto(produtoId: string) {
-    setErroFormulario(null);
     setItensCarrinho((atuais) =>
       atuais.filter((item) => item.produto.id !== produtoId),
     );
@@ -143,6 +141,7 @@ export function NewSaleForm({
   /**
    * Valida os dados e envia a venda. A trava impede envios repetidos;
    * após confirmação da API, limpa carrinho, cliente e desconto.
+   * As falhas de validação são apresentadas com notificações SweetAlert2.
    */
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -151,22 +150,21 @@ export function NewSaleForm({
       return;
     }
 
-    setErroFormulario(null);
-
     if (produtosLoading || produtosError !== null) {
-      setErroFormulario(
+      void notificar(
+        "warning",
         "Aguarde o carregamento dos produtos antes de registrar.",
       );
       return;
     }
 
     if (itensCarrinho.length === 0) {
-      setErroFormulario("Adicione pelo menos um produto à venda.");
+      void notificar("warning", "Adicione pelo menos um produto à venda.");
       return;
     }
 
     if (!descontoValido) {
-      setErroFormulario("Informe um desconto igual ou maior que zero.");
+      void notificar("warning", "Informe um desconto igual ou maior que zero.");
       return;
     }
 
@@ -176,7 +174,8 @@ export function NewSaleForm({
       const quantidade = Number(item.quantidade);
 
       if (!Number.isFinite(quantidade) || quantidade <= 0) {
-        setErroFormulario(
+        void notificar(
+          "warning",
           `Informe uma quantidade maior que zero para "${item.produto.nome}".`,
         );
         return;
@@ -186,7 +185,8 @@ export function NewSaleForm({
         item.produto.controlaEstoque &&
         quantidade > (item.produto.quantidadeEstoque ?? 0)
       ) {
-        setErroFormulario(
+        void notificar(
+          "warning",
           `A quantidade de "${item.produto.nome}" excede o estoque disponível.`,
         );
         return;
@@ -212,10 +212,10 @@ export function NewSaleForm({
       setClienteId("");
       setItensCarrinho([]);
       setDesconto("0");
-      setErroFormulario(null);
 
       onSuccess(vendaRegistrada);
     } catch {
+      // A página apresenta a falha usando uma notificação SweetAlert2.
       // A venda permanece preenchida para permitir uma nova tentativa.
     } finally {
       submissaoEmAndamento.current = false;
@@ -269,8 +269,6 @@ export function NewSaleForm({
           produtosError !== null ||
           produtosDisponiveis.length === 0
         }
-        erroFormulario={erroFormulario}
-        erroRegistro={erroRegistro}
         onCancel={onCancel}
       />
     </form>

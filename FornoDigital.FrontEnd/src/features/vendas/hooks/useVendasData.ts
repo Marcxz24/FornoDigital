@@ -103,7 +103,7 @@ export function useVendasData() {
         data: [
           vendaRegistrada,
           ...estadoAtual.data.filter(
-            (venda) => venda.Id !== vendaRegistrada.Id,
+            (venda) => venda.id !== vendaRegistrada.id,
           ),
         ],
       }));

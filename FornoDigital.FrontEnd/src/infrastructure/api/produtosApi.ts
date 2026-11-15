@@ -1,9 +1,16 @@
 import type {
   AlterarDisponibilidadeProdutoRequest,
   EditarProdutoRequest,
+  FiltroProduto,
+  OrdenacaoProduto,
   Produto,
   ProdutoRequest,
 } from "../../features/produtos/types/produto";
+import type {
+  ParametrosListagem,
+  ResultadoPaginado,
+} from "../../shared/types/paginacao";
+import { montarQueryString } from "../../shared/utils/paginacao";
 import {
   deleteRequest,
   getJson,
@@ -15,9 +22,29 @@ import {
 /**
  * Busca todos os produtos, inclusive os indisponíveis.
  * A API retorna também os códigos de barras associados a cada produto.
+ * Usada pelo registro de vendas e pelo dashboard.
  */
 export function listarProdutos(): Promise<Produto[]> {
   return getJson<Produto[]>("/api/produtos/listar-produtos");
+}
+
+/**
+ * Busca uma página do catálogo. Busca, filtro, ordenação e paginação
+ * são executados pela API no banco de dados.
+ */
+export function listarProdutosPaginado(
+  parametros: ParametrosListagem<OrdenacaoProduto, FiltroProduto>,
+): Promise<ResultadoPaginado<Produto>> {
+  const query = montarQueryString({
+    page: parametros.pagina,
+    pageSize: parametros.tamanhoPagina,
+    search: parametros.busca,
+    filtro: parametros.filtro,
+    sortBy: parametros.ordenacao.campo,
+    sortDirection: parametros.ordenacao.direcao,
+  });
+
+  return getJson<ResultadoPaginado<Produto>>(`/api/produtos${query}`);
 }
 
 /**

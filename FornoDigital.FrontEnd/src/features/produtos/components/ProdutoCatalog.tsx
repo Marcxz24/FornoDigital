@@ -1,25 +1,30 @@
-import type { Produto } from "../types/produto";
+import type { OrdenacaoProduto, Produto } from "../types/produto";
+import type { Ordenacao } from "../../../shared/types/paginacao";
+import { CabecalhoOrdenavel } from "../../../shared/components/CabecalhoOrdenavel";
 import { EmptyState } from "../../../shared/components/EmptyState";
 import { ErrorState } from "../../../shared/components/ErrorState";
 import { LoadingState } from "../../../shared/components/LoadingState";
+import { Paginacao } from "../../../shared/components/Paginacao";
 import { formatCurrency } from "../../../shared/utils/formatCurrency";
-import { formatDate } from "../../../shared/utils/formatDate";
 import { formatUnidadeMedida } from "../../../shared/utils/unidadeMedida";
 
 interface ProdutoCatalogProps {
   produtos: Produto[];
-  totalProdutos: number;
+  totalRegistros: number;
+  pagina: number;
+  totalPaginas: number;
+  tamanhoPagina: number;
+  possuiDados: boolean;
   carregando: boolean;
   erro: string | null;
+  buscaOuFiltroAtivo: boolean;
+  ordenacao: Ordenacao<OrdenacaoProduto>;
+  produtoEmOperacaoId?: string | null;
+  onOrdenar: (campo: OrdenacaoProduto) => void;
+  onMudarPagina: (pagina: number) => void;
   onRecarregar: () => void;
   onEditar?: (produto: Produto) => void;
   onAlternarDisponibilidade?: (produto: Produto) => void;
-  onRemoverCodigoBarras?: (
-    produto: Produto,
-    codigoBarras: string,
-  ) => void;
-  produtoEmOperacaoId?: string | null;
-  codigoBarrasEmRemocao?: string | null;
 }
 
 const formatarQuantidade = new Intl.NumberFormat("pt-BR", {
@@ -27,25 +32,49 @@ const formatarQuantidade = new Intl.NumberFormat("pt-BR", {
 });
 
 /**
- * Apresenta os estados do catálogo e os cartões dos produtos recebidos.
- * A busca e os filtros são feitos pela página; este componente só renderiza os resultados.
+ * Apresenta o estoque de um produto com os mesmos rótulos usados no catálogo.
+ */
+function renderizarEstoque(produto: Produto) {
+  if (!produto.controlaEstoque) {
+    return (
+      <span className="product-stock-uncontrolled">Não controlado</span>
+    );
+  }
+
+  const estoque = produto.quantidadeEstoque ?? 0;
+
+  return estoque > 0 ? (
+    <span className="product-stock-badge product-stock-in">
+      {formatarQuantidade.format(estoque)}
+    </span>
+  ) : (
+    <span className="product-stock-badge product-stock-empty">Sem estoque</span>
+  );
+}
+
+/**
+ * Apresenta a página do catálogo recebida da API em formato de grid.
+ * Busca, filtros, ordenação e paginação são controlados pela página;
+ * os códigos de barras são gerenciados no formulário de edição.
  */
 export function ProdutoCatalog({
   produtos,
-  totalProdutos,
+  totalRegistros,
+  pagina,
+  totalPaginas,
+  tamanhoPagina,
+  possuiDados,
   carregando,
   erro,
+  buscaOuFiltroAtivo,
+  ordenacao,
+  produtoEmOperacaoId,
+  onOrdenar,
+  onMudarPagina,
   onRecarregar,
   onEditar,
   onAlternarDisponibilidade,
-  onRemoverCodigoBarras,
-  produtoEmOperacaoId,
-  codigoBarrasEmRemocao,
 }: ProdutoCatalogProps) {
-  if (carregando) {
-    return <LoadingState message="Carregando produtos..." />;
-  }
-
   if (erro) {
     return (
       <div className="product-catalog-error">
@@ -61,187 +90,165 @@ export function ProdutoCatalog({
     );
   }
 
-  if (totalProdutos === 0) {
-    return (
+  if (!possuiDados) {
+    return <LoadingState message="Carregando produtos..." />;
+  }
+
+  if (totalRegistros === 0 && !carregando) {
+    return buscaOuFiltroAtivo ? (
+      <EmptyState message="Nenhum produto corresponde à busca ou ao filtro selecionado." />
+    ) : (
       <EmptyState message="Nenhum produto cadastrado. Cadastre um produto para começar o catálogo." />
     );
   }
 
-  if (produtos.length === 0) {
-    return (
-      <EmptyState message="Nenhum produto corresponde à busca ou ao filtro selecionado." />
-    );
-  }
-
   return (
-    <div className="product-catalog-grid">
-      {produtos.map((produto) => {
-        const estoque = produto.quantidadeEstoque ?? 0;
-        const temEstoqueControlado = produto.controlaEstoque && estoque > 0;
+    <>
+      <div className="data-grid-wrapper" aria-busy={carregando}>
+        <table className="data-grid">
+          <caption className="sr-only">
+            Catálogo de produtos, página {pagina} de {totalPaginas}
+          </caption>
+          <thead>
+            <tr>
+              <CabecalhoOrdenavel
+                campo="nome"
+                rotulo="Produto"
+                ordenacao={ordenacao}
+                onOrdenar={onOrdenar}
+              />
+              <th scope="col">Código de barras</th>
+              <th scope="col">Unidade</th>
+              <CabecalhoOrdenavel
+                campo="preco"
+                rotulo="Preço"
+                ordenacao={ordenacao}
+                onOrdenar={onOrdenar}
+                alinhamento="fim"
+              />
+              <th scope="col">Estoque</th>
+              <th scope="col">Disponibilidade</th>
+              {(onEditar || onAlternarDisponibilidade) && (
+                <th scope="col" className="data-grid-actions-column">
+                  Ações
+                </th>
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {produtos.map((produto) => {
+              const [codigoPrincipal, ...outrosCodigos] = produto.codigosBarras;
 
-        return (
-          <article className="product-catalog-card" key={produto.id}>
-            <header className="product-catalog-card-header">
-              <div className="product-catalog-identity">
-                <span className="product-catalog-mark" aria-hidden="true">
-                  {produto.nome.trim().charAt(0).toLocaleUpperCase("pt-BR") ||
-                    "P"}
-                </span>
-
-                <div className="product-catalog-name">
-                  <h3>{produto.nome}</h3>
-                  <p>{produto.descricao?.trim() || "Sem descrição informada"}</p>
-                </div>
-
-                {(onEditar || onAlternarDisponibilidade) && (
-                  <div className="product-card-actions">
-                    {onEditar && (
-                      <button
-                        className="product-card-action product-card-action-icon"
-                        type="button"
-                        onClick={() => onEditar(produto)}
-                        aria-label={`Editar ${produto.nome}`}
-                        title="Editar produto"
+              return (
+                <tr key={produto.id}>
+                  <td>
+                    <span className="data-grid-cell-primary">{produto.nome}</span>
+                    {produto.descricao?.trim() && (
+                      <span
+                        className="data-grid-cell-secondary"
+                        title={produto.descricao}
                       >
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                          <path d="m14 5 5 5M4 20l4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Z" />
-                        </svg>
-                      </button>
+                        {produto.descricao}
+                      </span>
                     )}
-
-                    {onAlternarDisponibilidade && (
-                      <button
-                        className={`product-card-action product-card-action-icon ${
-                          produto.disponivel
-                            ? "product-card-action-danger"
-                            : ""
-                        }`}
-                        type="button"
-                        onClick={() => onAlternarDisponibilidade(produto)}
-                        disabled={produtoEmOperacaoId === produto.id}
-                        aria-label={
-                          produto.disponivel
-                            ? `Inativar ${produto.nome}`
-                            : `Ativar ${produto.nome}`
-                        }
-                        title={
-                          produtoEmOperacaoId === produto.id
-                            ? "Atualizando disponibilidade"
-                            : produto.disponivel
-                              ? "Inativar produto"
-                              : "Ativar produto"
-                        }
-                      >
-                        <svg viewBox="0 0 24 24" aria-hidden="true">
-                          <path d="M3 5h18v4H3z" />
-                          <path d="M5 9v10h14V9" />
-                          <path d="M10 13h4" />
-                        </svg>
-                      </button>
+                  </td>
+                  <td className="data-grid-cell-nowrap">
+                    {codigoPrincipal ? (
+                      <span title={produto.codigosBarras.join("\n")}>
+                        <code className="product-grid-barcode">{codigoPrincipal}</code>
+                        {outrosCodigos.length > 0 && (
+                          <span className="product-grid-barcode-more">
+                            +{outrosCodigos.length}
+                          </span>
+                        )}
+                      </span>
+                    ) : (
+                      <span className="data-grid-cell-muted">Sem código</span>
                     )}
-                  </div>
-                )}
-              </div>
-
-              <span
-                className={`product-availability-badge ${
-                  produto.disponivel
-                    ? "product-availability-available"
-                    : "product-availability-unavailable"
-                }`}
-              >
-                {produto.disponivel ? "Disponível" : "Indisponível"}
-              </span>
-            </header>
-
-            <dl className="product-catalog-details">
-              <div>
-                <dt>Preço</dt>
-                <dd className="product-catalog-price">
-                  {formatCurrency(produto.preco)}
-                </dd>
-              </div>
-
-              <div>
-                <dt>Unidade</dt>
-                <dd>{formatUnidadeMedida(produto.unidadeMedida)}</dd>
-              </div>
-
-              <div>
-                <dt>Estoque</dt>
-                <dd>
-                  {produto.controlaEstoque ? (
+                  </td>
+                  <td className="data-grid-cell-nowrap">
+                    {formatUnidadeMedida(produto.unidadeMedida)}
+                  </td>
+                  <td className="data-grid-cell-end data-grid-cell-number data-grid-cell-primary">
+                    {formatCurrency(produto.preco)}
+                  </td>
+                  <td>{renderizarEstoque(produto)}</td>
+                  <td>
                     <span
-                      className={`product-stock-badge ${
-                        temEstoqueControlado
-                          ? "product-stock-in"
-                          : "product-stock-empty"
+                      className={`product-availability-badge ${
+                        produto.disponivel
+                          ? "product-availability-available"
+                          : "product-availability-unavailable"
                       }`}
                     >
-                      {temEstoqueControlado
-                        ? `${formatarQuantidade.format(estoque)} em estoque`
-                        : "Sem estoque"}
+                      {produto.disponivel ? "Disponível" : "Indisponível"}
                     </span>
-                  ) : (
-                    <span className="product-stock-uncontrolled">
-                      Estoque não controlado
-                    </span>
+                  </td>
+                  {(onEditar || onAlternarDisponibilidade) && (
+                    <td className="data-grid-actions-column">
+                      <div className="data-grid-actions">
+                        {onEditar && (
+                          <button
+                            className="product-card-action product-card-action-icon"
+                            type="button"
+                            onClick={() => onEditar(produto)}
+                            aria-label={`Editar ${produto.nome}`}
+                            title="Editar produto"
+                          >
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                              <path d="m14 5 5 5M4 20l4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Z" />
+                            </svg>
+                          </button>
+                        )}
+
+                        {onAlternarDisponibilidade && (
+                          <button
+                            className={`product-card-action product-card-action-icon ${
+                              produto.disponivel
+                                ? "product-card-action-danger"
+                                : ""
+                            }`}
+                            type="button"
+                            onClick={() => onAlternarDisponibilidade(produto)}
+                            disabled={produtoEmOperacaoId === produto.id}
+                            aria-label={
+                              produto.disponivel
+                                ? `Inativar ${produto.nome}`
+                                : `Ativar ${produto.nome}`
+                            }
+                            title={
+                              produtoEmOperacaoId === produto.id
+                                ? "Atualizando disponibilidade"
+                                : produto.disponivel
+                                  ? "Inativar produto"
+                                  : "Ativar produto"
+                            }
+                          >
+                            <svg viewBox="0 0 24 24" aria-hidden="true">
+                              <path d="M3 5h18v4H3z" />
+                              <path d="M5 9v10h14V9" />
+                              <path d="M10 13h4" />
+                            </svg>
+                          </button>
+                        )}
+                      </div>
+                    </td>
                   )}
-                </dd>
-              </div>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
 
-              <div>
-                <dt>Cadastro</dt>
-                <dd>{formatDate(produto.dataCriacao)}</dd>
-              </div>
-            </dl>
-
-            <section
-              className="product-catalog-barcodes"
-              aria-label={`Códigos de barras de ${produto.nome}`}
-            >
-              <h4>Códigos de barras</h4>
-
-              {produto.codigosBarras.length === 0 ? (
-                <p className="product-catalog-no-barcodes">
-                  Nenhum código cadastrado.
-                </p>
-              ) : (
-                <ul>
-                  {produto.codigosBarras.map((codigoBarras) => (
-                    <li key={`${produto.id}-${codigoBarras}`}>
-                      <code>{codigoBarras}</code>
-
-                      {onRemoverCodigoBarras && (
-                        <button
-                          className="product-card-action product-card-action-icon product-card-action-danger"
-                          type="button"
-                          onClick={() =>
-                            onRemoverCodigoBarras(produto, codigoBarras)
-                          }
-                          disabled={
-                            codigoBarrasEmRemocao === codigoBarras
-                          }
-                          aria-label={`Remover o código ${codigoBarras} de ${produto.nome}`}
-                          title={
-                            codigoBarrasEmRemocao === codigoBarras
-                              ? "Removendo código"
-                              : "Remover código de barras"
-                          }
-                        >
-                          <svg viewBox="0 0 24 24" aria-hidden="true">
-                            <path d="M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3" />
-                          </svg>
-                        </button>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </section>
-          </article>
-        );
-      })}
-    </div>
+      <Paginacao
+        pagina={pagina}
+        totalPaginas={totalPaginas}
+        totalRegistros={totalRegistros}
+        tamanhoPagina={tamanhoPagina}
+        desabilitada={carregando}
+        onMudarPagina={onMudarPagina}
+      />
+    </>
   );
 }

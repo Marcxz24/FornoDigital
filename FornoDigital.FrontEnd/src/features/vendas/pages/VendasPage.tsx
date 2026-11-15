@@ -3,7 +3,7 @@ import { SaleDetails } from "../components/SaleDetails";
 import { SalesList } from "../components/SalesList";
 import { NewSaleForm } from "../components/NewSaleForm";
 import { useVendasData } from "../hooks/useVendasData";
-import type { Venda } from "../types/venda";
+import type { RegistrarVendaRequest, Venda } from "../types/venda";
 import { formatCurrency } from "../../../shared/utils/formatCurrency";
 import { notificar } from "../../../shared/utils/notificacoes";
 
@@ -28,7 +28,6 @@ export function VendasPage({
     clientes,
     produtos,
     registrando,
-    erroRegistro,
     registrarNovaVenda,
   } = useVendasData();
 
@@ -38,6 +37,27 @@ export function VendasPage({
 
   const vendaSelecionada =
     vendas.data.find((venda) => venda.id === vendaSelecionadaId) ?? null;
+
+  /**
+   * Envia a venda ao hook. Se a API rejeitar, exibe uma notificação
+   * e propaga o erro para que o formulário mantenha os dados preenchidos.
+   */
+  async function enviarVenda(request: RegistrarVendaRequest): Promise<Venda> {
+    try {
+      return await registrarNovaVenda(request);
+    } catch (error: unknown) {
+      const mensagem =
+        error instanceof Error
+          ? error.message
+          : "Ocorreu um erro inesperado ao registrar a venda.";
+
+      void notificar(
+        "error",
+        `Não foi possível registrar a venda: ${mensagem}`,
+      );
+      throw error;
+    }
+  }
 
   /**
  * Seleciona a venda registrada e exibe temporariamente o total confirmado pela API.
@@ -96,8 +116,7 @@ export function VendasPage({
           produtosLoading={produtos.loading}
           produtosError={produtos.error}
           registrando={registrando}
-          erroRegistro={erroRegistro}
-          onRegistrar={registrarNovaVenda}
+          onRegistrar={enviarVenda}
           onSuccess={handleSuccess}
           onCancel={() => onNavigate?.("visualizar-vendas")}
         />

@@ -1,5 +1,4 @@
 import type { Cliente } from "../../clientes/types/cliente";
-import { ErrorState } from "../../../shared/components/ErrorState";
 import { formatCurrency } from "../../../shared/utils/formatCurrency";
 
 interface SaleSummaryProps {
@@ -15,8 +14,6 @@ interface SaleSummaryProps {
   totalEstimado: number;
   registrando: boolean;
   submitDesabilitado: boolean;
-  erroFormulario: string | null;
-  erroRegistro: string | null;
   onCancel: () => void;
 }
 
@@ -37,8 +34,6 @@ export function SaleSummary({
   totalEstimado,
   registrando,
   submitDesabilitado,
-  erroFormulario,
-  erroRegistro,
   onCancel,
 }: SaleSummaryProps) {
   return (
@@ -109,14 +104,6 @@ export function SaleSummary({
         <p className="sale-summary-note">
           O valor final será confirmado pela API ao registrar a venda.
         </p>
-
-        {erroFormulario && <ErrorState message={erroFormulario} />}
-
-        {erroRegistro && (
-          <ErrorState
-            message={`Não foi possível registrar a venda: ${erroRegistro}`}
-          />
-        )}
 
         <div className="sale-summary-actions">
           <button

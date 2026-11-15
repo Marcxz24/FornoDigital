@@ -63,3 +63,17 @@ export type EditarProdutoRequest = Omit<ProdutoRequest, "disponivel">;
 export interface AlterarDisponibilidadeProdutoRequest {
   disponivel: boolean;
 }
+
+/**
+ * Filtros de situação aceitos pela listagem de produtos.
+ */
+export type FiltroProduto =
+  | "todos"
+  | "disponiveis"
+  | "indisponiveis"
+  | "estoque-zerado";
+
+/**
+ * Campos aceitos pela API para ordenar a listagem de produtos.
+ */
+export type OrdenacaoProduto = "nome" | "preco" | "dataCriacao";

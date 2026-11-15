@@ -1,10 +1,7 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { ProdutoCatalog } from "../components/ProdutoCatalog";
 import { ProdutoForm } from "../components/ProdutoForm";
-import {
-  ProdutoFilters,
-  type FiltroProduto,
-} from "../components/ProdutoFilters";
+import { ProdutoFilters } from "../components/ProdutoFilters";
 import { useProdutosData } from "../hooks/useProdutosData";
 import type { Produto, ProdutoRequest } from "../types/produto";
 import {
@@ -20,9 +17,11 @@ interface ListarProdutosPageProps {
   onNavigate: (pagina: "cadastrar-produto") => void;
 }
 
+const formatarNumero = new Intl.NumberFormat("pt-BR");
+
 /**
- * Exibe o catálogo e coordena busca, filtros, edição, disponibilidade
- * e remoção individual de códigos de barras.
+ * Exibe o catálogo paginado e coordena busca, filtros, edição, disponibilidade
+ * e remoção individual de códigos de barras (feita no formulário de edição).
  */
 export function ListarProdutosPage({
   theme,
@@ -30,57 +29,19 @@ export function ListarProdutosPage({
   onNavigate,
 }: ListarProdutosPageProps) {
   const {
-    produtos,
+    catalogo,
     editandoId,
     alterandoDisponibilidadeId,
     codigoBarrasEmRemocao,
-    erroOperacao,
     atualizar,
     alterarDisponibilidade,
     removerCodigoBarras: removerCodigoBarrasDaApi,
-    recarregar,
   } = useProdutosData();
 
-  const [termoBusca, setTermoBusca] = useState("");
-  const [filtroAtivo, setFiltroAtivo] = useState<FiltroProduto>("todos");
   const [produtoEmEdicao, setProdutoEmEdicao] = useState<Produto | null>(null);
 
-  /**
-   * Filtra localmente produtos já carregados por nome, descrição ou código.
-   * O filtro de estoque zerado só se aplica a produtos com controle de estoque.
-   */
-  const produtosFiltrados = useMemo(() => {
-    const termo = termoBusca.trim().toLocaleLowerCase("pt-BR");
-
-    return produtos.data.filter((produto) => {
-      const correspondeBusca =
-        termo.length === 0 ||
-        produto.nome.toLocaleLowerCase("pt-BR").includes(termo) ||
-        (produto.descricao ?? "").toLocaleLowerCase("pt-BR").includes(termo) ||
-        produto.codigosBarras.some((codigo) =>
-          codigo.toLocaleLowerCase("pt-BR").includes(termo),
-        );
-
-      const correspondeFiltro = (() => {
-        switch (filtroAtivo) {
-          case "disponiveis":
-            return produto.disponivel;
-          case "indisponiveis":
-            return !produto.disponivel;
-          case "estoque-zerado":
-            return (
-              produto.controlaEstoque &&
-              (produto.quantidadeEstoque ?? 0) <= 0
-            );
-          case "todos":
-          default:
-            return true;
-        }
-      })();
-
-      return correspondeBusca && correspondeFiltro;
-    });
-  }, [produtos.data, termoBusca, filtroAtivo]);
+  const buscaOuFiltroAtivo =
+    catalogo.buscaAplicada !== "" || catalogo.filtro !== "todos";
 
   /**
    * Envia à API os campos editáveis, incluindo a coleção de códigos.
@@ -158,25 +119,28 @@ export function ListarProdutosPage({
   }
 
   /**
-   * Pede confirmação e remove somente o código selecionado.
-   * O produto continua no catálogo e o hook atualiza seus códigos após HTTP 204.
+   * Pede confirmação e remove somente o código selecionado, gravando a remoção
+   * imediatamente pela API. O produto continua no catálogo.
+   * Retorna true somente quando a API confirma a remoção (HTTP 204).
    */
   async function solicitarRemocaoCodigoBarras(
     produto: Produto,
     codigoBarras: string,
-  ) {
+  ): Promise<boolean> {
     const confirmou = await confirmarAcao(
       "Remover código de barras?",
-      `O código ${codigoBarras} será removido de ${produto.nome}. O produto será mantido.`,
+      `O código ${codigoBarras} será removido de ${produto.nome} imediatamente. O produto será mantido.`,
     );
 
     if (!confirmou) {
-      return;
+      return false;
     }
 
     try {
       await removerCodigoBarrasDaApi(produto.id, codigoBarras);
       void notificar("success", "Código de barras removido.");
+
+      return true;
     } catch (error: unknown) {
       void notificar(
         "error",
@@ -184,6 +148,8 @@ export function ListarProdutosPage({
           ? error.message
           : "Não foi possível remover o código de barras.",
       );
+
+      return false;
     }
   }
 
@@ -235,10 +201,13 @@ export function ListarProdutosPage({
           key={produtoEmEdicao.id}
           produto={produtoEmEdicao}
           salvando={editandoId !== null}
-          erroApi={erroOperacao}
+          codigoBarrasEmRemocao={codigoBarrasEmRemocao}
           onSubmit={salvarEdicao}
           onSuccess={concluirEdicao}
           onCancel={() => setProdutoEmEdicao(null)}
+          onRemoverCodigoBarrasSalvo={(codigoBarras) =>
+            solicitarRemocaoCodigoBarras(produtoEmEdicao, codigoBarras)
+          }
         />
       ) : (
         <section className="panel product-catalog-panel">
@@ -248,33 +217,41 @@ export function ListarProdutosPage({
               <h2>Catálogo completo</h2>
             </div>
 
-            <span className="product-catalog-count">
-              {produtos.loading
-                ? "Carregando..."
-                : `${produtos.data.length} ${
-                    produtos.data.length === 1 ? "produto" : "produtos"
-                  }`}
+            <span className="product-catalog-count" aria-live="polite">
+              {catalogo.possuiDados
+                ? `${formatarNumero.format(catalogo.totalRegistros)} ${
+                    catalogo.totalRegistros === 1
+                      ? "produto encontrado"
+                      : "produtos encontrados"
+                  }`
+                : "Carregando..."}
             </span>
           </div>
 
           <ProdutoFilters
-            termoBusca={termoBusca}
-            filtroAtivo={filtroAtivo}
-            onTermoBuscaChange={setTermoBusca}
-            onFiltroChange={setFiltroAtivo}
+            termoBusca={catalogo.termoBusca}
+            filtroAtivo={catalogo.filtro ?? "todos"}
+            onTermoBuscaChange={catalogo.alterarBusca}
+            onFiltroChange={catalogo.alterarFiltro}
           />
 
           <ProdutoCatalog
-            produtos={produtosFiltrados}
-            totalProdutos={produtos.data.length}
-            carregando={produtos.loading}
-            erro={produtos.error}
-            onRecarregar={recarregar}
+            produtos={catalogo.itens}
+            totalRegistros={catalogo.totalRegistros}
+            pagina={catalogo.pagina}
+            totalPaginas={catalogo.totalPaginas}
+            tamanhoPagina={catalogo.tamanhoPagina}
+            possuiDados={catalogo.possuiDados}
+            carregando={catalogo.carregando}
+            erro={catalogo.erro}
+            buscaOuFiltroAtivo={buscaOuFiltroAtivo}
+            ordenacao={catalogo.ordenacao}
+            produtoEmOperacaoId={alterandoDisponibilidadeId}
+            onOrdenar={catalogo.ordenarPor}
+            onMudarPagina={catalogo.irParaPagina}
+            onRecarregar={catalogo.recarregar}
             onEditar={setProdutoEmEdicao}
             onAlternarDisponibilidade={alternarDisponibilidade}
-            onRemoverCodigoBarras={solicitarRemocaoCodigoBarras}
-            produtoEmOperacaoId={alterandoDisponibilidadeId}
-            codigoBarrasEmRemocao={codigoBarrasEmRemocao}
           />
         </section>
       )}
