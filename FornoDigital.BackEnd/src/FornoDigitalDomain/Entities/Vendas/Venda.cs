@@ -1,4 +1,5 @@
-﻿using FornoDigitalDomain.Common;
+﻿using FornoDigitalDomain.Enums.Vendas;
+using FornoDigitalDomain.Common;
 using System.Linq;
 using System;
 using System.Collections.Generic;
@@ -17,6 +18,11 @@ namespace FornoDigitalDomain.Entities.Vendas
         /// Obtém o identificador único universal (UUID) opcional do cliente vinculado a esta venda.
         /// </summary>
         public Guid? ClienteId { get; private set; }
+
+        /// <summary>
+        /// Obtém a forma de pagamento utilizada na venda.
+        /// </summary>
+        public FormaPagamento FormaPagamento { get; private set; }
 
         /// <summary>
         /// Obtém uma visualização somente leitura (<see cref="IReadOnlyCollection{T}"/>) 
@@ -51,10 +57,18 @@ namespace FornoDigitalDomain.Entities.Vendas
         }
 
         /// <summary>
-        /// Inicia uma venda, opcionalmente associada a um cliente.
+        /// Inicia uma venda com a forma de pagamento informada,
+        /// opcionalmente associada a um cliente.
         /// </summary>
-        public Venda(Guid? clienteId = null)
+        public Venda(FormaPagamento formaPagamento, Guid? clienteId = null)
         {
+            if (!Enum.IsDefined(formaPagamento))
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(formaPagamento),
+                    "A forma de pagamento informada não é válida.");
+            }
+
             if (clienteId == Guid.Empty)
             {
                 throw new ArgumentException(
@@ -62,6 +76,7 @@ namespace FornoDigitalDomain.Entities.Vendas
                     nameof(clienteId));
             }
 
+            FormaPagamento = formaPagamento;
             ClienteId = clienteId;
         }
 

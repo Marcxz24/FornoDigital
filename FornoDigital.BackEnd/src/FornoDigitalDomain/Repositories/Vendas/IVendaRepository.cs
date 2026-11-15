@@ -33,5 +33,14 @@ namespace FornoDigitalDomain.Repositories.Vendas
         /// <returns></returns>
         Task<IReadOnlyList<Venda>> ObterTodasAsync(
             CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Obtém as vendas, com seus itens, registradas no intervalo informado (em UTC).
+        /// O início é inclusivo e o fim é exclusivo.
+        /// </summary>
+        Task<IReadOnlyList<Venda>> ObterPorPeriodoAsync(
+            DateTime inicioUtc,
+            DateTime fimUtc,
+            CancellationToken cancellationToken = default);
     }
 }

@@ -90,7 +90,7 @@ namespace FornoDigitalApplication.Vendas.RegistrarVenda
                 }
             }
 
-            var venda = new Venda(command.ClienteId);
+            var venda = new Venda(command.FormaPagamento, command.ClienteId);
 
             foreach (var itemCommand in command.Itens)
             {

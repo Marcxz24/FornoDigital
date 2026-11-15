@@ -56,5 +56,18 @@ namespace FornoDigitalInfrastructure.Repositories.Vendas
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);
         }
+
+        /// <inheritdoc />
+        public async Task<IReadOnlyList<Venda>> ObterPorPeriodoAsync(
+            DateTime inicioUtc,
+            DateTime fimUtc,
+            CancellationToken cancellationToken = default)
+        {
+            return await _context.Vendas
+                .Include(venda => venda.Itens)
+                .AsNoTracking()
+                .Where(venda => venda.DataCriacao >= inicioUtc && venda.DataCriacao < fimUtc)
+                .ToListAsync(cancellationToken);
+        }
     }
 }

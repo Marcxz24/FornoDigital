@@ -53,10 +53,19 @@ namespace FornoDigitalInfrastructure.Configurations.Vendas
                 .HasColumnType("INTEGER")
                 .IsRequired();
 
+            builder.Property(v => v.FormaPagamento)
+                .HasColumnName("Forma_Pagamento")
+                .HasConversion<int>()
+                .IsRequired();
+
             builder.Property(v => v.DataCriacao)
-            .HasColumnName("Data_Criacao")
-            .HasConversion(new UtcDateTimeConverter())
-            .IsRequired();
+                .HasColumnName("Data_Criacao")
+                .HasConversion(new UtcDateTimeConverter())
+                .IsRequired();
+
+            // Índice usado pelos indicadores para filtrar as vendas por período.
+            builder.HasIndex(v => v.DataCriacao)
+                .HasDatabaseName("IX_Vendas_Data_Criacao");
 
             builder.Navigation(v => v.Itens)
                 .HasField("_itens")

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using FornoDigitalDomain.Enums.Vendas;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -9,10 +10,12 @@ namespace FornoDigitalApplication.Vendas.RegistrarVenda
     /// </summary>
     /// <param name="ClienteId">Identificador opcional do cliente.</param>
     /// <param name="Itens">Produtos e quantidades incluídos na venda.</param>
+    /// <param name="FormaPagamento">Forma de pagamento utilizada na venda.</param>
     /// <param name="Desconto">Desconto total em moeda, com padrão zero.</param>
     public sealed record RegistrarVendaCommand(
         Guid? ClienteId,
         IReadOnlyCollection<RegistrarVendaItemCommand> Itens,
+        FormaPagamento FormaPagamento,
         decimal Desconto = 0m);
 
     /// <summary>

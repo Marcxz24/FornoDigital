@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using FornoDigitalDomain.Enums.Vendas;
 
 namespace FornoDigitalApi.Contracts.Vendas
 {
@@ -25,6 +26,14 @@ namespace FornoDigitalApi.Contracts.Vendas
         /// Obtém ou inicializa o valor do desconto aplicado sobre o total da venda.
         /// </summary>
         public decimal Desconto { get; init; }
+
+        /// <summary>
+        /// Forma de pagamento da venda: 1 (Dinheiro), 2 (Cartão) ou 3 (PIX).
+        /// </summary>
+        [EnumDataType(
+            typeof(FormaPagamento),
+            ErrorMessage = "Selecione uma forma de pagamento válida: 1 (Dinheiro), 2 (Cartão) ou 3 (PIX).")]
+        public FormaPagamento FormaPagamento { get; init; }
 
         /// <summary>
         /// Realiza a validação personalizada do objeto de requisição, verificando se o identificador do cliente 

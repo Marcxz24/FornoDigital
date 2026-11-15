@@ -1,4 +1,6 @@
-﻿namespace FornoDigitalApi.Contracts.Vendas
+﻿using FornoDigitalDomain.Enums.Vendas;
+
+namespace FornoDigitalApi.Contracts.Vendas
 {
     /// <summary>
     /// Representa o objeto de transferência de dados (DTO) em formato record <see cref="VendaResponse"/> 
@@ -11,6 +13,7 @@
     /// <param name="Desconto">O valor do desconto aplicado sobre a venda.</param>
     /// <param name="Total">O valor financeiro total final da transação.</param>
     /// <param name="DataCriacao">A data e horário (em formato UTC) em que a venda foi registrada.</param>
+    /// <param name="FormaPagamento">A forma de pagamento utilizada na venda.</param>
     public sealed record VendaResponse(
         Guid Id,
         Guid? ClienteId,
@@ -18,5 +21,6 @@
         decimal Subtotal,
         decimal Desconto,
         decimal Total,
+        FormaPagamento FormaPagamento,
         DateTime DataCriacao);
 }

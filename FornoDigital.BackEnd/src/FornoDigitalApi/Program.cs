@@ -13,6 +13,7 @@ using FornoDigitalApplication.Produtos.ListarProdutosPaginado;
 using FornoDigitalApplication.Produtos.RemoverCodigoBarrasProduto;
 using FornoDigitalApplication.Vendas.ListarVendas;
 using FornoDigitalApplication.Vendas.ObterVenda;
+using FornoDigitalApplication.Vendas.ObterIndicadoresVendas;
 using FornoDigitalApplication.Vendas.RegistrarVenda;
 using FornoDigitalDomain.Repositories.Clientes;
 using FornoDigitalDomain.Repositories.Produtos;
@@ -79,6 +80,7 @@ builder.Services.AddScoped<IVendaRepository, VendaRepository>();
 builder.Services.AddScoped<RegistrarVendaHandler>();
 builder.Services.AddScoped<ObterVendaHandler>();
 builder.Services.AddScoped<ListarVendasHandler>();
+builder.Services.AddScoped<ObterIndicadoresVendasHandler>();
 
 // Cors (Cross-Origin Resource Sharing) é uma política de segurança que permite ou restringe recursos em uma página web sendo solicitados de outro domínio fora do domínio do qual o recurso foi servido. Aqui, estamos configurando uma política CORS para permitir que o frontend local (em http://localhost:5173) acesse a API sem restrições de cabeçalhos ou métodos HTTP.
 builder.Services.AddCors(options =>

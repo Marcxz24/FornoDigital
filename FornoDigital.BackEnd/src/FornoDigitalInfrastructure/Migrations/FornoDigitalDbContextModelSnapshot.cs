@@ -204,6 +204,10 @@ namespace FornoDigitalInfrastructure.Migrations
                         .HasColumnType("INTEGER")
                         .HasColumnName("Desconto");
 
+                    b.Property<int>("FormaPagamento")
+                        .HasColumnType("INTEGER")
+                        .HasColumnName("Forma_Pagamento");
+
                     b.Property<long>("Subtotal")
                         .HasColumnType("INTEGER")
                         .HasColumnName("Subtotal");
@@ -215,6 +219,9 @@ namespace FornoDigitalInfrastructure.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ClienteId");
+
+                    b.HasIndex("DataCriacao")
+                        .HasDatabaseName("IX_Vendas_Data_Criacao");
 
                     b.ToTable("Vendas", (string)null);
                 });

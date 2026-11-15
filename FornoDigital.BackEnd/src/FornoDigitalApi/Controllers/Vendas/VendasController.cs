@@ -61,6 +61,7 @@ namespace FornoDigitalApi.Controllers.Vendas
                         item.ProdutoId,
                         item.Quantidade))
                     .ToList(),
+                FormaPagamento: request.FormaPagamento,
                 Desconto: request.Desconto);
 
             try
@@ -82,6 +83,7 @@ namespace FornoDigitalApi.Controllers.Vendas
                     Subtotal: venda.Subtotal,
                     Desconto: venda.Desconto,
                     Total: venda.Total,
+                    FormaPagamento: venda.FormaPagamento,
                     DataCriacao: venda.DataCriacao);
 
                 return StatusCode(StatusCodes.Status201Created, response);
@@ -149,6 +151,7 @@ namespace FornoDigitalApi.Controllers.Vendas
                 Subtotal: venda.Subtotal,
                 Desconto: venda.Desconto,
                 Total: venda.Total,
+                FormaPagamento: venda.FormaPagamento,
                 DataCriacao: venda.DataCriacao);
 
             return Ok(response);
@@ -180,6 +183,7 @@ namespace FornoDigitalApi.Controllers.Vendas
                 Subtotal: venda.Subtotal,
                 Desconto: venda.Desconto,
                 Total: venda.Total,
+                FormaPagamento: venda.FormaPagamento,
                 DataCriacao: venda.DataCriacao
             )).ToList();
 
