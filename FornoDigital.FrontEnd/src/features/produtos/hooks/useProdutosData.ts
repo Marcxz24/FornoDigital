@@ -4,6 +4,7 @@ import {
   cadastrarProduto,
   editarProduto,
   listarProdutos,
+  removerCodigoBarrasProduto,
 } from "../../../infrastructure/api/produtosApi";
 import type {
   AlterarDisponibilidadeProdutoRequest,
@@ -28,8 +29,9 @@ function obterMensagemErro(error: unknown): string {
 }
 
 /**
- * Carrega produtos e coordena cadastro, edição e alteração de disponibilidade.
- * Todas as requisições HTTP são delegadas às funções de produtosApi.
+ * Carrega produtos e coordena cadastro, edição, disponibilidade
+ * e remoção individual de códigos de barras.
+ * As chamadas HTTP são delegadas às funções de produtosApi.
  */
 export function useProdutosData() {
   const [produtos, setProdutos] = useState<ProdutosState>({
@@ -41,6 +43,9 @@ export function useProdutosData() {
   const [editandoId, setEditandoId] = useState<string | null>(null);
   const [alterandoDisponibilidadeId, setAlterandoDisponibilidadeId] =
     useState<string | null>(null);
+  const [codigoBarrasEmRemocao, setCodigoBarrasEmRemocao] = useState<
+    string | null
+  >(null);
   const [erroOperacao, setErroOperacao] = useState<string | null>(null);
 
   /**
@@ -151,9 +156,7 @@ export function useProdutosData() {
       setProdutos((estadoAtual) => ({
         ...estadoAtual,
         data: estadoAtual.data.map((produto) =>
-          produto.id === produtoAtualizado.id
-            ? produtoAtualizado
-            : produto,
+          produto.id === produtoAtualizado.id ? produtoAtualizado : produto,
         ),
       }));
 
@@ -183,9 +186,7 @@ export function useProdutosData() {
       setProdutos((estadoAtual) => ({
         ...estadoAtual,
         data: estadoAtual.data.map((produto) =>
-          produto.id === produtoAtualizado.id
-            ? produtoAtualizado
-            : produto,
+          produto.id === produtoAtualizado.id ? produtoAtualizado : produto,
         ),
       }));
 
@@ -198,15 +199,52 @@ export function useProdutosData() {
     }
   }
 
+  /**
+   * Remove um código pela API. Só depois da confirmação HTTP atualiza
+   * a lista local, mantendo o produto no catálogo.
+   */
+  async function removerCodigoBarras(
+    produtoId: string,
+    codigoBarras: string,
+  ): Promise<void> {
+    setCodigoBarrasEmRemocao(codigoBarras);
+    setErroOperacao(null);
+
+    try {
+      await removerCodigoBarrasProduto(produtoId, codigoBarras);
+
+      setProdutos((estadoAtual) => ({
+        ...estadoAtual,
+        data: estadoAtual.data.map((produto) =>
+          produto.id === produtoId
+            ? {
+                ...produto,
+                codigosBarras: produto.codigosBarras.filter(
+                  (codigo) => codigo !== codigoBarras,
+                ),
+              }
+            : produto,
+        ),
+      }));
+    } catch (error: unknown) {
+      setErroOperacao(obterMensagemErro(error));
+      throw error;
+    } finally {
+      setCodigoBarrasEmRemocao(null);
+    }
+  }
+
   return {
     produtos,
     salvando,
     editandoId,
     alterandoDisponibilidadeId,
+    codigoBarrasEmRemocao,
     erroOperacao,
     cadastrar,
     atualizar,
     alterarDisponibilidade,
+    removerCodigoBarras,
     recarregar,
   };
 }

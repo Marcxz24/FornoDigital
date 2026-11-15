@@ -14,7 +14,12 @@ interface ProdutoCatalogProps {
   onRecarregar: () => void;
   onEditar?: (produto: Produto) => void;
   onAlternarDisponibilidade?: (produto: Produto) => void;
+  onRemoverCodigoBarras?: (
+    produto: Produto,
+    codigoBarras: string,
+  ) => void;
   produtoEmOperacaoId?: string | null;
+  codigoBarrasEmRemocao?: string | null;
 }
 
 const formatarQuantidade = new Intl.NumberFormat("pt-BR", {
@@ -33,7 +38,9 @@ export function ProdutoCatalog({
   onRecarregar,
   onEditar,
   onAlternarDisponibilidade,
+  onRemoverCodigoBarras,
   produtoEmOperacaoId,
+  codigoBarrasEmRemocao,
 }: ProdutoCatalogProps) {
   if (carregando) {
     return <LoadingState message="Carregando produtos..." />;
@@ -77,7 +84,8 @@ export function ProdutoCatalog({
             <header className="product-catalog-card-header">
               <div className="product-catalog-identity">
                 <span className="product-catalog-mark" aria-hidden="true">
-                  {produto.nome.trim().charAt(0).toLocaleUpperCase("pt-BR") || "P"}
+                  {produto.nome.trim().charAt(0).toLocaleUpperCase("pt-BR") ||
+                    "P"}
                 </span>
 
                 <div className="product-catalog-name">
@@ -103,8 +111,11 @@ export function ProdutoCatalog({
 
                     {onAlternarDisponibilidade && (
                       <button
-                        className={`product-card-action product-card-action-icon ${produto.disponivel ? "product-card-action-danger" : ""
-                          }`}
+                        className={`product-card-action product-card-action-icon ${
+                          produto.disponivel
+                            ? "product-card-action-danger"
+                            : ""
+                        }`}
                         type="button"
                         onClick={() => onAlternarDisponibilidade(produto)}
                         disabled={produtoEmOperacaoId === produto.id}
@@ -133,10 +144,11 @@ export function ProdutoCatalog({
               </div>
 
               <span
-                className={`product-availability-badge ${produto.disponivel
-                  ? "product-availability-available"
-                  : "product-availability-unavailable"
-                  }`}
+                className={`product-availability-badge ${
+                  produto.disponivel
+                    ? "product-availability-available"
+                    : "product-availability-unavailable"
+                }`}
               >
                 {produto.disponivel ? "Disponível" : "Indisponível"}
               </span>
@@ -160,10 +172,11 @@ export function ProdutoCatalog({
                 <dd>
                   {produto.controlaEstoque ? (
                     <span
-                      className={`product-stock-badge ${temEstoqueControlado
-                        ? "product-stock-in"
-                        : "product-stock-empty"
-                        }`}
+                      className={`product-stock-badge ${
+                        temEstoqueControlado
+                          ? "product-stock-in"
+                          : "product-stock-empty"
+                      }`}
                     >
                       {temEstoqueControlado
                         ? `${formatarQuantidade.format(estoque)} em estoque`
@@ -182,6 +195,50 @@ export function ProdutoCatalog({
                 <dd>{formatDate(produto.dataCriacao)}</dd>
               </div>
             </dl>
+
+            <section
+              className="product-catalog-barcodes"
+              aria-label={`Códigos de barras de ${produto.nome}`}
+            >
+              <h4>Códigos de barras</h4>
+
+              {produto.codigosBarras.length === 0 ? (
+                <p className="product-catalog-no-barcodes">
+                  Nenhum código cadastrado.
+                </p>
+              ) : (
+                <ul>
+                  {produto.codigosBarras.map((codigoBarras) => (
+                    <li key={`${produto.id}-${codigoBarras}`}>
+                      <code>{codigoBarras}</code>
+
+                      {onRemoverCodigoBarras && (
+                        <button
+                          className="product-card-action product-card-action-icon product-card-action-danger"
+                          type="button"
+                          onClick={() =>
+                            onRemoverCodigoBarras(produto, codigoBarras)
+                          }
+                          disabled={
+                            codigoBarrasEmRemocao === codigoBarras
+                          }
+                          aria-label={`Remover o código ${codigoBarras} de ${produto.nome}`}
+                          title={
+                            codigoBarrasEmRemocao === codigoBarras
+                              ? "Removendo código"
+                              : "Remover código de barras"
+                          }
+                        >
+                          <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M4 7h16M10 11v6m4-6v6M6 7l1 14h10l1-14M9 7V4h6v3" />
+                          </svg>
+                        </button>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
           </article>
         );
       })}

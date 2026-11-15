@@ -135,6 +135,7 @@
 
 .product-search-result-info {
   display: grid;
+  flex: 1 1 auto;
   min-width: 0;
   gap: 4px;
 }
@@ -149,8 +150,10 @@
 }
 
 .product-search-result-stock {
+  overflow-wrap: anywhere;
   color: var(--muted);
   font-size: 0.7rem;
+  line-height: 1.45;
 }
 
 .product-search-result-price {
@@ -414,9 +417,13 @@
   }
 
   .product-search-result {
-    align-items: flex-start;
+    align-items: stretch;
     flex-direction: column;
     gap: 7px;
+  }
+
+  .product-search-result-price {
+    align-self: flex-start;
   }
 
   .sale-summary-actions {

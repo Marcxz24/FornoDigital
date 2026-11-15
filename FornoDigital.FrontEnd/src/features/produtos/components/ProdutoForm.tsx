@@ -23,6 +23,7 @@ interface ValoresFormulario {
   disponivel: boolean;
   controlaEstoque: boolean;
   quantidadeEstoque: string;
+  codigosBarras: string[];
 }
 
 type CampoFormulario = keyof ValoresFormulario;
@@ -30,7 +31,7 @@ type ErrosFormulario = Partial<Record<CampoFormulario, string>>;
 
 /**
  * Prepara os campos a partir do produto escolhido.
- * No cadastro inicia valores vazios, disponível para venda e sem controle de estoque.
+ * No cadastro inicia valores vazios, disponível e sem códigos de barras.
  */
 function criarValoresIniciais(produto: Produto | null): ValoresFormulario {
   return {
@@ -48,6 +49,7 @@ function criarValoresIniciais(produto: Produto | null): ValoresFormulario {
       produto?.quantidadeEstoque === undefined
         ? ""
         : String(produto.quantidadeEstoque),
+    codigosBarras: produto?.codigosBarras ?? [],
   };
 }
 
@@ -68,12 +70,14 @@ function converterPreco(valor: string): number | null {
 }
 
 /**
- * Valida os campos conforme as restrições de apresentação do formulário.
- * As validações do Back-End continuam sendo a confirmação final.
+ * Valida os campos antes de enviar o formulário.
+ * Códigos vazios e repetidos são indicados visualmente; a API continua
+ * responsável pela validação final, inclusive contra códigos já cadastrados.
  */
 function validarFormulario(valores: ValoresFormulario): ErrosFormulario {
   const erros: ErrosFormulario = {};
   const preco = converterPreco(valores.preco);
+  const codigosBarras = valores.codigosBarras.map((codigo) => codigo.trim());
 
   if (!valores.nome.trim()) {
     erros.nome = "Informe o nome do produto.";
@@ -99,13 +103,20 @@ function validarFormulario(valores: ValoresFormulario): ErrosFormulario {
     }
   }
 
+  if (codigosBarras.some((codigo) => codigo.length === 0)) {
+    erros.codigosBarras =
+      "Preencha ou remova as linhas vazias de código de barras.";
+  } else if (new Set(codigosBarras).size !== codigosBarras.length) {
+    erros.codigosBarras = "Remova os códigos de barras repetidos.";
+  }
+
   return erros;
 }
 
 /**
  * Monta o pedido de cadastro ou edição.
- * Converte preço e quantidade para números e envia quantidade nula
- * quando o estoque não é controlado ou o campo ficou vazio.
+ * Converte valores numéricos e remove espaços externos dos códigos,
+ * sem converter os códigos para números nem remover zeros à esquerda.
  */
 function criarRequisicao(valores: ValoresFormulario): ProdutoRequest {
   const preco = converterPreco(valores.preco);
@@ -127,12 +138,14 @@ function criarRequisicao(valores: ValoresFormulario): ProdutoRequest {
     unidadeMedida: valores.unidadeMedida,
     controlaEstoque: valores.controlaEstoque,
     quantidadeEstoque,
+    codigosBarras: valores.codigosBarras.map((codigo) => codigo.trim()),
   };
 }
 
 /**
- * Renderiza e valida os dados do produto antes de enviá-los à página.
- * Se recebeu um produto, preenche os campos para edição; caso contrário, inicia cadastro.
+ * Renderiza e valida os dados do produto antes de enviá-los.
+ * Se recebeu um produto, preenche os campos para edição; caso contrário,
+ * inicia o formulário de cadastro.
  */
 export function ProdutoForm({
   produto,
@@ -150,7 +163,7 @@ export function ProdutoForm({
   const estaEditando = produto !== null;
 
   /**
-   * Atualiza um campo e remove apenas a mensagem de validação anterior daquele campo.
+   * Atualiza um campo e remove a mensagem de validação anterior daquele campo.
    */
   function atualizarCampo<K extends CampoFormulario>(
     campo: K,
@@ -174,8 +187,38 @@ export function ProdutoForm({
   }
 
   /**
+   * Adiciona uma linha de código vazia para preenchimento.
+   */
+  function adicionarCodigoBarras() {
+    atualizarCampo("codigosBarras", [...valores.codigosBarras, ""]);
+  }
+
+  /**
+   * Atualiza o código da linha indicada sem convertê-lo para número.
+   */
+  function alterarCodigoBarras(indice: number, codigo: string) {
+    const codigosAtualizados = valores.codigosBarras.map(
+      (codigoAtual, indiceAtual) =>
+        indiceAtual === indice ? codigo : codigoAtual,
+    );
+
+    atualizarCampo("codigosBarras", codigosAtualizados);
+  }
+
+  /**
+   * Remove a linha de código indicada do formulário.
+   */
+  function removerCodigoBarrasDoFormulario(indice: number) {
+    const codigosAtualizados = valores.codigosBarras.filter(
+      (_, indiceAtual) => indiceAtual !== indice,
+    );
+
+    atualizarCampo("codigosBarras", codigosAtualizados);
+  }
+
+  /**
    * Impede envios repetidos, valida os campos e chama o cadastro ou edição.
-   * Em caso de falha, mantém os valores para a pessoa corrigir ou tentar novamente.
+   * Em caso de falha, mantém os valores para uma nova tentativa.
    */
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -243,6 +286,64 @@ export function ProdutoForm({
               </span>
             )}
           </label>
+
+          <div className="product-form-field product-form-field-wide">
+            <span>
+              Códigos de barras{" "}
+              <span className="product-field-optional">(opcional)</span>
+            </span>
+
+            <div className="product-barcode-list">
+              {valores.codigosBarras.map((codigo, indice) => (
+                <div className="product-barcode-row" key={indice}>
+                  <input
+                    type="text"
+                    inputMode="text"
+                    value={codigo}
+                    onChange={(event) =>
+                      alterarCodigoBarras(indice, event.target.value)
+                    }
+                    aria-label={`Código de barras ${indice + 1}`}
+                    aria-invalid={Boolean(
+                      erros.codigosBarras &&
+                        (codigo.trim().length === 0 ||
+                          valores.codigosBarras
+                            .map((item) => item.trim())
+                            .filter((item) => item === codigo.trim()).length > 1),
+                    )}
+                    autoComplete="off"
+                    spellCheck={false}
+                    placeholder="Digite ou leia o código"
+                  />
+
+                  <button
+                    className="sale-secondary-button"
+                    type="button"
+                    onClick={() => removerCodigoBarrasDoFormulario(indice)}
+                    disabled={salvando}
+                    aria-label={`Remover código de barras ${indice + 1}`}
+                  >
+                    Remover
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            <button
+              className="sale-secondary-button"
+              type="button"
+              onClick={adicionarCodigoBarras}
+              disabled={salvando}
+            >
+              + Adicionar código
+            </button>
+
+            {erros.codigosBarras && (
+              <span className="product-field-error" role="alert">
+                {erros.codigosBarras}
+              </span>
+            )}
+          </div>
 
           <label className="product-form-field">
             Preço (R$) <span aria-hidden="true">*</span>

@@ -1,6 +1,6 @@
 /**
  * Representa os dados de produto recebidos da API pelo Front-End,
- * incluindo informações de disponibilidade, estoque e auditoria.
+ * incluindo códigos de barras, disponibilidade, estoque e auditoria.
  */
 export interface Produto {
   /** Identificador único universal (UUID) do produto. */
@@ -21,6 +21,8 @@ export interface Produto {
   quantidadeEstoque: number | null;
   /** Indica se o produto possui saldo positivo em estoque. */
   temEstoque: boolean;
+  /** Códigos de barras associados ao produto, preservados como texto. */
+  codigosBarras: string[];
   /** Data e hora em UTC da criação/cadastro inicial do registro no formato ISO string. */
   dataCriacao: string;
   /** Data e hora em UTC da última atualização do registro (ou nulo se nunca foi alterado). */
@@ -35,8 +37,7 @@ export type UnidadeMedidaCodigo = 1 | 2 | 3 | 4 | 5;
 
 /**
  * Dados enviados pelo Front-End ao cadastrar um produto.
- * O preço é um número em reais; quando o estoque não for controlado,
- * a quantidade deve ser enviada como null.
+ * Os códigos de barras são texto para preservar zeros à esquerda.
  */
 export interface ProdutoRequest {
   nome: string;
@@ -46,11 +47,13 @@ export interface ProdutoRequest {
   unidadeMedida: UnidadeMedidaCodigo;
   controlaEstoque: boolean;
   quantidadeEstoque: number | null;
+  codigosBarras: string[];
 }
 
 /**
  * Dados aceitos pela rota de edição.
  * A disponibilidade é omitida porque possui uma rota PATCH própria.
+ * Enviar a coleção de códigos substitui a lista atual; uma lista vazia a remove.
  */
 export type EditarProdutoRequest = Omit<ProdutoRequest, "disponivel">;
 

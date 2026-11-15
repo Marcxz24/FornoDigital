@@ -522,3 +522,86 @@
   stroke-linejoin: round;
   stroke-width: 1.8;
 }
+
+/* Lista de códigos no formulário de cadastro e edição */
+.product-barcode-list {
+  display: grid;
+  width: 100%;
+  gap: 0.55rem;
+}
+
+.product-barcode-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.product-barcode-row input {
+  min-width: 0;
+}
+
+.product-barcode-row > button {
+  min-height: 2.7rem;
+}
+
+/* Códigos associados apresentados nos cartões do catálogo */
+.product-catalog-barcodes {
+  display: grid;
+  gap: 0.65rem;
+  min-width: 0;
+  margin-top: 1rem;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border);
+}
+
+.product-catalog-barcodes h4 {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 650;
+}
+
+.product-catalog-barcodes ul {
+  display: grid;
+  gap: 0.45rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.product-catalog-barcodes li {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+}
+
+.product-catalog-barcodes code {
+  overflow-wrap: anywhere;
+  min-width: 0;
+  padding: 0.35rem 0.55rem;
+  border: 1px solid var(--border);
+  border-radius: 0.45rem;
+  background: var(--surface-inset);
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+}
+
+.product-catalog-no-barcodes {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+/* Mantém os campos e códigos utilizáveis em telas estreitas */
+@media (max-width: 600px) {
+  .product-barcode-row {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .product-catalog-barcodes li {
+    align-items: flex-start;
+  }
+}

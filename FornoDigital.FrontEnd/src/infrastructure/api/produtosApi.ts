@@ -5,6 +5,7 @@ import type {
   ProdutoRequest,
 } from "../../features/produtos/types/produto";
 import {
+  deleteRequest,
   getJson,
   patchJson,
   postJson,
@@ -13,7 +14,7 @@ import {
 
 /**
  * Busca todos os produtos, inclusive os indisponíveis.
- * Delega o GET ao cliente HTTP compartilhado.
+ * A API retorna também os códigos de barras associados a cada produto.
  */
 export function listarProdutos(): Promise<Produto[]> {
   return getJson<Produto[]>("/api/produtos/listar-produtos");
@@ -21,7 +22,7 @@ export function listarProdutos(): Promise<Produto[]> {
 
 /**
  * Envia o cadastro e retorna o produto criado pela API.
- * O cliente HTTP serializa o pedido como JSON.
+ * O pedido inclui a lista de códigos de barras como texto.
  */
 export function cadastrarProduto(
   request: ProdutoRequest,
@@ -33,8 +34,8 @@ export function cadastrarProduto(
 }
 
 /**
- * Atualiza os dados e a configuração de estoque do produto.
- * A disponibilidade não é incluída neste pedido; ela usa a rota PATCH separada.
+ * Atualiza os dados do produto e substitui sua coleção de códigos de barras
+ * pela lista enviada. A disponibilidade usa uma rota PATCH separada.
  */
 export function editarProduto(
   id: string,
@@ -56,5 +57,18 @@ export function alterarDisponibilidadeProduto(
   return patchJson<AlterarDisponibilidadeProdutoRequest, Produto>(
     `/api/produtos/${encodeURIComponent(id)}/disponibilidade`,
     request,
+  );
+}
+
+/**
+ * Remove um código de barras específico sem excluir o produto.
+ * A resposta HTTP 204 não tem corpo e é tratada pelo deleteRequest.
+ */
+export function removerCodigoBarrasProduto(
+  produtoId: string,
+  codigoBarras: string,
+): Promise<void> {
+  return deleteRequest(
+    `/api/produtos/${encodeURIComponent(produtoId)}/codigos-barras/${encodeURIComponent(codigoBarras)}`,
   );
 }

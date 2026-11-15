@@ -21,8 +21,8 @@ interface ListarProdutosPageProps {
 }
 
 /**
- * Exibe o catálogo e coordena busca, filtros, edição e disponibilidade.
- * As chamadas HTTP são feitas pelo hook useProdutosData.
+ * Exibe o catálogo e coordena busca, filtros, edição, disponibilidade
+ * e remoção individual de códigos de barras.
  */
 export function ListarProdutosPage({
   theme,
@@ -33,9 +33,11 @@ export function ListarProdutosPage({
     produtos,
     editandoId,
     alterandoDisponibilidadeId,
+    codigoBarrasEmRemocao,
     erroOperacao,
     atualizar,
     alterarDisponibilidade,
+    removerCodigoBarras: removerCodigoBarrasDaApi,
     recarregar,
   } = useProdutosData();
 
@@ -44,8 +46,8 @@ export function ListarProdutosPage({
   const [produtoEmEdicao, setProdutoEmEdicao] = useState<Produto | null>(null);
 
   /**
-   * Filtra localmente os produtos já carregados.
-   * O estado de estoque zerado só se aplica a produtos com controle de estoque.
+   * Filtra localmente produtos já carregados por nome, descrição ou código.
+   * O filtro de estoque zerado só se aplica a produtos com controle de estoque.
    */
   const produtosFiltrados = useMemo(() => {
     const termo = termoBusca.trim().toLocaleLowerCase("pt-BR");
@@ -54,7 +56,10 @@ export function ListarProdutosPage({
       const correspondeBusca =
         termo.length === 0 ||
         produto.nome.toLocaleLowerCase("pt-BR").includes(termo) ||
-        (produto.descricao ?? "").toLocaleLowerCase("pt-BR").includes(termo);
+        (produto.descricao ?? "").toLocaleLowerCase("pt-BR").includes(termo) ||
+        produto.codigosBarras.some((codigo) =>
+          codigo.toLocaleLowerCase("pt-BR").includes(termo),
+        );
 
       const correspondeFiltro = (() => {
         switch (filtroAtivo) {
@@ -78,8 +83,8 @@ export function ListarProdutosPage({
   }, [produtos.data, termoBusca, filtroAtivo]);
 
   /**
-   * Envia os dados editáveis à API. A disponibilidade é excluída porque
-   * possui uma ação e uma rota próprias no Back-End.
+   * Envia à API os campos editáveis, incluindo a coleção de códigos.
+   * A disponibilidade continua sendo alterada pela ação própria do catálogo.
    */
   async function salvarEdicao(request: ProdutoRequest): Promise<Produto> {
     if (!produtoEmEdicao) {
@@ -94,6 +99,7 @@ export function ListarProdutosPage({
         unidadeMedida: request.unidadeMedida,
         controlaEstoque: request.controlaEstoque,
         quantidadeEstoque: request.quantidadeEstoque,
+        codigosBarras: request.codigosBarras,
       });
     } catch (error: unknown) {
       void notificar(
@@ -107,7 +113,7 @@ export function ListarProdutosPage({
   }
 
   /**
-   * Fecha o formulário após a API confirmar a edição e atualiza a interface.
+   * Fecha o formulário depois que a API confirmar a edição.
    */
   function concluirEdicao(produto: Produto) {
     setProdutoEmEdicao(null);
@@ -115,7 +121,7 @@ export function ListarProdutosPage({
   }
 
   /**
-   * Confirma a ação antes de alterar a disponibilidade e mostra o resultado.
+   * Confirma a ação antes de alterar a disponibilidade do produto.
    */
   async function alternarDisponibilidade(produto: Produto) {
     const vaiInativar = produto.disponivel;
@@ -147,6 +153,36 @@ export function ListarProdutosPage({
         error instanceof Error
           ? error.message
           : "Não foi possível alterar a disponibilidade do produto.",
+      );
+    }
+  }
+
+  /**
+   * Pede confirmação e remove somente o código selecionado.
+   * O produto continua no catálogo e o hook atualiza seus códigos após HTTP 204.
+   */
+  async function solicitarRemocaoCodigoBarras(
+    produto: Produto,
+    codigoBarras: string,
+  ) {
+    const confirmou = await confirmarAcao(
+      "Remover código de barras?",
+      `O código ${codigoBarras} será removido de ${produto.nome}. O produto será mantido.`,
+    );
+
+    if (!confirmou) {
+      return;
+    }
+
+    try {
+      await removerCodigoBarrasDaApi(produto.id, codigoBarras);
+      void notificar("success", "Código de barras removido.");
+    } catch (error: unknown) {
+      void notificar(
+        "error",
+        error instanceof Error
+          ? error.message
+          : "Não foi possível remover o código de barras.",
       );
     }
   }
@@ -236,7 +272,9 @@ export function ListarProdutosPage({
             onRecarregar={recarregar}
             onEditar={setProdutoEmEdicao}
             onAlternarDisponibilidade={alternarDisponibilidade}
+            onRemoverCodigoBarras={solicitarRemocaoCodigoBarras}
             produtoEmOperacaoId={alterandoDisponibilidadeId}
+            codigoBarrasEmRemocao={codigoBarrasEmRemocao}
           />
         </section>
       )}
