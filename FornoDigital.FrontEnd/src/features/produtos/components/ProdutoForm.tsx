@@ -7,6 +7,7 @@ import type {
 import { ErrorState } from "../../../shared/components/ErrorState";
 
 interface ProdutoFormProps {
+  produto: Produto | null;
   salvando: boolean;
   erroApi: string | null;
   onSubmit: (request: ProdutoRequest) => Promise<Produto>;
@@ -28,6 +29,29 @@ type CampoFormulario = keyof ValoresFormulario;
 type ErrosFormulario = Partial<Record<CampoFormulario, string>>;
 
 /**
+ * Prepara os campos a partir do produto escolhido.
+ * No cadastro inicia valores vazios, disponível para venda e sem controle de estoque.
+ */
+function criarValoresIniciais(produto: Produto | null): ValoresFormulario {
+  return {
+    nome: produto?.nome ?? "",
+    descricao: produto?.descricao ?? "",
+    preco: produto ? produto.preco.toFixed(2).replace(".", ",") : "",
+    unidadeMedida:
+      produto && produto.unidadeMedida >= 1 && produto.unidadeMedida <= 5
+        ? (produto.unidadeMedida as UnidadeMedidaCodigo)
+        : 1,
+    disponivel: produto?.disponivel ?? true,
+    controlaEstoque: produto?.controlaEstoque ?? false,
+    quantidadeEstoque:
+      produto?.quantidadeEstoque === null ||
+      produto?.quantidadeEstoque === undefined
+        ? ""
+        : String(produto.quantidadeEstoque),
+  };
+}
+
+/**
  * Converte o preço digitado para número em reais.
  * Aceita vírgula ou ponto decimal, exige valor positivo e até duas casas.
  */
@@ -44,8 +68,8 @@ function converterPreco(valor: string): number | null {
 }
 
 /**
- * Valida os campos conforme as restrições visuais do formulário.
- * Não substitui validações do Back-End; apenas ajuda a corrigir dados antes do envio.
+ * Valida os campos conforme as restrições de apresentação do formulário.
+ * As validações do Back-End continuam sendo a confirmação final.
  */
 function validarFormulario(valores: ValoresFormulario): ErrosFormulario {
   const erros: ErrosFormulario = {};
@@ -79,9 +103,9 @@ function validarFormulario(valores: ValoresFormulario): ErrosFormulario {
 }
 
 /**
- * Monta o pedido no formato da API.
- * Converte preço e quantidade em números e envia quantidade nula
- * quando o controle de estoque está desligado ou o campo ficou vazio.
+ * Monta o pedido de cadastro ou edição.
+ * Converte preço e quantidade para números e envia quantidade nula
+ * quando o estoque não é controlado ou o campo ficou vazio.
  */
 function criarRequisicao(valores: ValoresFormulario): ProdutoRequest {
   const preco = converterPreco(valores.preco);
@@ -107,28 +131,26 @@ function criarRequisicao(valores: ValoresFormulario): ProdutoRequest {
 }
 
 /**
- * Renderiza e valida os campos do formulário antes de solicitar o cadastro à página.
+ * Renderiza e valida os dados do produto antes de enviá-los à página.
+ * Se recebeu um produto, preenche os campos para edição; caso contrário, inicia cadastro.
  */
 export function ProdutoForm({
+  produto,
   salvando,
   erroApi,
   onSubmit,
   onSuccess,
   onCancel,
 }: ProdutoFormProps) {
-  const [valores, setValores] = useState<ValoresFormulario>({
-    nome: "",
-    descricao: "",
-    preco: "",
-    unidadeMedida: 1,
-    disponivel: true,
-    controlaEstoque: false,
-    quantidadeEstoque: "",
-  });
+  const [valores, setValores] = useState<ValoresFormulario>(() =>
+    criarValoresIniciais(produto),
+  );
   const [erros, setErros] = useState<ErrosFormulario>({});
 
+  const estaEditando = produto !== null;
+
   /**
-   * Atualiza um campo e apaga apenas o erro anterior daquele campo.
+   * Atualiza um campo e remove apenas a mensagem de validação anterior daquele campo.
    */
   function atualizarCampo<K extends CampoFormulario>(
     campo: K,
@@ -152,8 +174,8 @@ export function ProdutoForm({
   }
 
   /**
-   * Impede envio repetido, valida os valores e chama o cadastro.
-   * Se a API falhar, o formulário permanece preenchido para correção ou nova tentativa.
+   * Impede envios repetidos, valida os campos e chama o cadastro ou edição.
+   * Em caso de falha, mantém os valores para a pessoa corrigir ou tentar novamente.
    */
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -170,10 +192,10 @@ export function ProdutoForm({
     }
 
     try {
-      const produtoCriado = await onSubmit(criarRequisicao(valores));
-      onSuccess(produtoCriado);
+      const produtoSalvo = await onSubmit(criarRequisicao(valores));
+      onSuccess(produtoSalvo);
     } catch {
-      // A página apresenta a mensagem da API em erroApi.
+      // A página apresenta a mensagem retornada pela API em erroApi.
     }
   }
 
@@ -183,7 +205,7 @@ export function ProdutoForm({
         <div className="panel-heading">
           <div>
             <p className="eyebrow">Catálogo</p>
-            <h2>Novo produto</h2>
+            <h2>{estaEditando ? "Editar produto" : "Novo produto"}</h2>
           </div>
         </div>
 
@@ -258,19 +280,28 @@ export function ProdutoForm({
             </select>
           </label>
 
-          <label className="product-form-toggle">
-            <input
-              type="checkbox"
-              checked={valores.disponivel}
-              onChange={(event) =>
-                atualizarCampo("disponivel", event.target.checked)
-              }
-            />
-            <span>
-              <strong>Disponível para venda</strong>
-              <small>O produto poderá ser selecionado em uma nova venda.</small>
-            </span>
-          </label>
+          {!estaEditando ? (
+            <label className="product-form-toggle">
+              <input
+                type="checkbox"
+                checked={valores.disponivel}
+                onChange={(event) =>
+                  atualizarCampo("disponivel", event.target.checked)
+                }
+              />
+              <span>
+                <strong>Disponível para venda</strong>
+                <small>
+                  O produto poderá ser selecionado em uma nova venda.
+                </small>
+              </span>
+            </label>
+          ) : (
+            <p className="product-field-optional">
+              A disponibilidade é alterada pela ação de ativar ou inativar no
+              catálogo.
+            </p>
+          )}
 
           <label className="product-form-toggle">
             <input
@@ -293,7 +324,7 @@ export function ProdutoForm({
 
           {valores.controlaEstoque && (
             <label className="product-form-field">
-              Quantidade inicial
+              Quantidade
               <input
                 type="number"
                 min="0"
@@ -305,7 +336,7 @@ export function ProdutoForm({
                 aria-invalid={Boolean(erros.quantidadeEstoque)}
               />
               <span className="product-field-optional">
-                Pode ficar vazia; o estoque começará em zero.
+                Pode ficar vazia; o estoque será definido como zero.
               </span>
               {erros.quantidadeEstoque && (
                 <span className="product-field-error" role="alert">
@@ -333,7 +364,13 @@ export function ProdutoForm({
             type="submit"
             disabled={salvando}
           >
-            {salvando ? "Salvando..." : "Cadastrar produto"}
+            {salvando
+              ? estaEditando
+                ? "Salvando alterações..."
+                : "Salvando..."
+              : estaEditando
+                ? "Salvar alterações"
+                : "Cadastrar produto"}
           </button>
         </div>
       </section>

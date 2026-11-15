@@ -12,6 +12,9 @@ interface ProdutoCatalogProps {
   carregando: boolean;
   erro: string | null;
   onRecarregar: () => void;
+  onEditar?: (produto: Produto) => void;
+  onAlternarDisponibilidade?: (produto: Produto) => void;
+  produtoEmOperacaoId?: string | null;
 }
 
 const formatarQuantidade = new Intl.NumberFormat("pt-BR", {
@@ -28,6 +31,9 @@ export function ProdutoCatalog({
   carregando,
   erro,
   onRecarregar,
+  onEditar,
+  onAlternarDisponibilidade,
+  produtoEmOperacaoId,
 }: ProdutoCatalogProps) {
   if (carregando) {
     return <LoadingState message="Carregando produtos..." />;
@@ -78,14 +84,59 @@ export function ProdutoCatalog({
                   <h3>{produto.nome}</h3>
                   <p>{produto.descricao?.trim() || "Sem descrição informada"}</p>
                 </div>
+
+                {(onEditar || onAlternarDisponibilidade) && (
+                  <div className="product-card-actions">
+                    {onEditar && (
+                      <button
+                        className="product-card-action product-card-action-icon"
+                        type="button"
+                        onClick={() => onEditar(produto)}
+                        aria-label={`Editar ${produto.nome}`}
+                        title="Editar produto"
+                      >
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="m14 5 5 5M4 20l4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Z" />
+                        </svg>
+                      </button>
+                    )}
+
+                    {onAlternarDisponibilidade && (
+                      <button
+                        className={`product-card-action product-card-action-icon ${produto.disponivel ? "product-card-action-danger" : ""
+                          }`}
+                        type="button"
+                        onClick={() => onAlternarDisponibilidade(produto)}
+                        disabled={produtoEmOperacaoId === produto.id}
+                        aria-label={
+                          produto.disponivel
+                            ? `Inativar ${produto.nome}`
+                            : `Ativar ${produto.nome}`
+                        }
+                        title={
+                          produtoEmOperacaoId === produto.id
+                            ? "Atualizando disponibilidade"
+                            : produto.disponivel
+                              ? "Inativar produto"
+                              : "Ativar produto"
+                        }
+                      >
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M3 5h18v4H3z" />
+                          <path d="M5 9v10h14V9" />
+                          <path d="M10 13h4" />
+                        </svg>
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
 
               <span
-                className={`product-availability-badge ${
-                  produto.disponivel
-                    ? "product-availability-available"
-                    : "product-availability-unavailable"
-                }`}
+                className={`product-availability-badge ${produto.disponivel
+                  ? "product-availability-available"
+                  : "product-availability-unavailable"
+                  }`}
               >
                 {produto.disponivel ? "Disponível" : "Indisponível"}
               </span>
@@ -109,11 +160,10 @@ export function ProdutoCatalog({
                 <dd>
                   {produto.controlaEstoque ? (
                     <span
-                      className={`product-stock-badge ${
-                        temEstoqueControlado
-                          ? "product-stock-in"
-                          : "product-stock-empty"
-                      }`}
+                      className={`product-stock-badge ${temEstoqueControlado
+                        ? "product-stock-in"
+                        : "product-stock-empty"
+                        }`}
                     >
                       {temEstoqueControlado
                         ? `${formatarQuantidade.format(estoque)} em estoque`

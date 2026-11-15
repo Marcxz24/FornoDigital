@@ -83,6 +83,7 @@ export function CadastrarProdutoPage({
       </header>
 
       <ProdutoForm
+        produto={null}
         salvando={salvando}
         erroApi={null}
         onSubmit={enviarCadastro}

@@ -1,9 +1,13 @@
 import { useEffect, useState } from "react";
 import {
+  alterarDisponibilidadeProduto,
   cadastrarProduto,
+  editarProduto,
   listarProdutos,
 } from "../../../infrastructure/api/produtosApi";
 import type {
+  AlterarDisponibilidadeProdutoRequest,
+  EditarProdutoRequest,
   Produto,
   ProdutoRequest,
 } from "../types/produto";
@@ -24,8 +28,8 @@ function obterMensagemErro(error: unknown): string {
 }
 
 /**
- * Carrega e mantém o estado dos produtos e coordena cadastro e recarga.
- * As requisições HTTP são feitas pelas funções de infraestrutura da API.
+ * Carrega produtos e coordena cadastro, edição e alteração de disponibilidade.
+ * Todas as requisições HTTP são delegadas às funções de produtosApi.
  */
 export function useProdutosData() {
   const [produtos, setProdutos] = useState<ProdutosState>({
@@ -34,10 +38,13 @@ export function useProdutosData() {
     error: null,
   });
   const [salvando, setSalvando] = useState(false);
+  const [editandoId, setEditandoId] = useState<string | null>(null);
+  const [alterandoDisponibilidadeId, setAlterandoDisponibilidadeId] =
+    useState<string | null>(null);
   const [erroOperacao, setErroOperacao] = useState<string | null>(null);
 
   /**
-   * Busca novamente os produtos e atualiza o estado de carregamento,
+   * Busca novamente a lista e atualiza o estado de carregamento,
    * de dados ou de erro conforme o resultado da API.
    */
   async function recarregar() {
@@ -66,8 +73,7 @@ export function useProdutosData() {
 
   /**
    * Carrega os produtos quando o hook é iniciado.
-   * A variável ativo impede atualizações de estado caso o componente
-   * que usa o hook seja desmontado antes da resposta.
+   * A variável ativo impede atualizar o estado após o componente ser desmontado.
    */
   useEffect(() => {
     let ativo = true;
@@ -99,8 +105,8 @@ export function useProdutosData() {
   }, []);
 
   /**
-   * Envia o pedido de cadastro e adiciona o produto retornado pela API à lista.
-   * Em caso de falha, guarda a mensagem e propaga o erro para a página exibi-lo.
+   * Cadastra um produto e o insere no início da lista local.
+   * Se houver falha, guarda a mensagem e propaga o erro à página.
    */
   async function cadastrar(request: ProdutoRequest): Promise<Produto> {
     setSalvando(true);
@@ -128,11 +134,79 @@ export function useProdutosData() {
     }
   }
 
+  /**
+   * Edita os dados do produto e substitui sua versão na lista local
+   * pela resposta atualizada retornada pela API.
+   */
+  async function atualizar(
+    id: string,
+    request: EditarProdutoRequest,
+  ): Promise<Produto> {
+    setEditandoId(id);
+    setErroOperacao(null);
+
+    try {
+      const produtoAtualizado = await editarProduto(id, request);
+
+      setProdutos((estadoAtual) => ({
+        ...estadoAtual,
+        data: estadoAtual.data.map((produto) =>
+          produto.id === produtoAtualizado.id
+            ? produtoAtualizado
+            : produto,
+        ),
+      }));
+
+      return produtoAtualizado;
+    } catch (error: unknown) {
+      setErroOperacao(obterMensagemErro(error));
+      throw error;
+    } finally {
+      setEditandoId(null);
+    }
+  }
+
+  /**
+   * Altera a disponibilidade e sincroniza o cartão do produto
+   * com a resposta mais recente da API.
+   */
+  async function alterarDisponibilidade(
+    id: string,
+    request: AlterarDisponibilidadeProdutoRequest,
+  ): Promise<Produto> {
+    setAlterandoDisponibilidadeId(id);
+    setErroOperacao(null);
+
+    try {
+      const produtoAtualizado = await alterarDisponibilidadeProduto(id, request);
+
+      setProdutos((estadoAtual) => ({
+        ...estadoAtual,
+        data: estadoAtual.data.map((produto) =>
+          produto.id === produtoAtualizado.id
+            ? produtoAtualizado
+            : produto,
+        ),
+      }));
+
+      return produtoAtualizado;
+    } catch (error: unknown) {
+      setErroOperacao(obterMensagemErro(error));
+      throw error;
+    } finally {
+      setAlterandoDisponibilidadeId(null);
+    }
+  }
+
   return {
     produtos,
     salvando,
+    editandoId,
+    alterandoDisponibilidadeId,
     erroOperacao,
     cadastrar,
+    atualizar,
+    alterarDisponibilidade,
     recarregar,
   };
 }

@@ -47,3 +47,16 @@ export interface ProdutoRequest {
   controlaEstoque: boolean;
   quantidadeEstoque: number | null;
 }
+
+/**
+ * Dados aceitos pela rota de edição.
+ * A disponibilidade é omitida porque possui uma rota PATCH própria.
+ */
+export type EditarProdutoRequest = Omit<ProdutoRequest, "disponivel">;
+
+/**
+ * Pedido usado para ativar ou inativar um produto.
+ */
+export interface AlterarDisponibilidadeProdutoRequest {
+  disponivel: boolean;
+}

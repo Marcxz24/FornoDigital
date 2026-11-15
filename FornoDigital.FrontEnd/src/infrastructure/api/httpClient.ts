@@ -134,6 +134,24 @@ export function putJson<TRequest, TResponse>(
 }
 
 /**
+ * Realiza uma requisição PATCH enviando o corpo como JSON
+ * e esperando receber a resposta JSON da API.
+ */
+export function patchJson<TRequest, TResponse>(
+  path: string,
+  body: TRequest,
+): Promise<TResponse> {
+  return requestJson<TResponse>(path, {
+    method: "PATCH",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+}
+
+/**
  * Realiza uma requisição DELETE que não espera corpo na resposta.
  */
 export function deleteRequest(path: string): Promise<void> {
