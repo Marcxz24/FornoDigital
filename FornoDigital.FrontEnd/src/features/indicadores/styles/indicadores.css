@@ -1,0 +1,217 @@
+/* Paleta categórica dos gráficos (validada para daltonismo), tema escuro.
+   Também vale para os gráficos exibidos no dashboard. */
+.indicadores-page,
+.indicadores-dashboard {
+  --series-1: #3987e5;
+  --series-2: #d95926;
+  --series-3: #199e70;
+  --series-4: #c98500;
+  --series-5: #d55181;
+  --series-neutra: #8a8985;
+}
+
+.indicadores-page {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
+/* Gráficos do dashboard, entre os cards de resumo e as listas */
+.indicadores-dashboard {
+  margin-bottom: 22px;
+}
+
+/* Mesma paleta com os tons ajustados para o tema claro */
+.theme-light .indicadores-page,
+.theme-light .indicadores-dashboard {
+  --series-1: #2a78d6;
+  --series-2: #eb6834;
+  --series-3: #1baf7a;
+  --series-4: #eda100;
+  --series-5: #e87ba4;
+  --series-neutra: #a3a29c;
+}
+
+/* Filtro de período: atalhos à esquerda e datas à direita, em uma linha */
+.indicadores-filtro {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.indicadores-atalhos,
+.indicadores-datas {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.indicadores-campo-data {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.indicadores-campo-data input {
+  min-height: 2.4rem;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 0.6rem;
+  background: var(--surface-inset);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.85rem;
+}
+
+.indicadores-campo-data input:focus {
+  border-color: var(--accent);
+  outline: none;
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.indicadores-conteudo {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  transition: opacity 160ms ease;
+}
+
+.indicadores-conteudo[aria-busy="true"] {
+  opacity: 0.55;
+}
+
+/* Permite que o conteúdo do cartão encolha dentro da coluna da grade */
+.indicadores-page .summary-card > div {
+  min-width: 0;
+}
+
+/* Nomes longos (produto mais vendido) quebram em até duas linhas */
+.indicadores-cartao-valor {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  line-height: 1.15;
+  overflow-wrap: anywhere;
+}
+
+/* Ranking e pizza lado a lado em telas largas */
+.indicadores-linha {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 1.25rem;
+}
+
+.indicadores-grafico {
+  width: 100%;
+  min-width: 0;
+}
+
+.indicadores-grafico-linhas {
+  height: 320px;
+}
+
+.indicadores-grafico-pizza {
+  height: 220px;
+}
+
+.indicadores-grafico-formas {
+  height: 280px;
+}
+
+.indicadores-tabela {
+  min-width: 0;
+}
+
+.indicadores-grafico + .data-grid-wrapper {
+  margin-top: 0.75rem;
+}
+
+/* Pizza com a legenda de valores ao lado */
+.indicadores-pizza {
+  display: grid;
+  gap: 1rem;
+}
+
+.indicadores-legenda {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.indicadores-legenda li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--text-secondary);
+  font-size: 0.84rem;
+}
+
+.indicadores-legenda-cor {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 0.2rem;
+}
+
+.indicadores-legenda-nome {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.indicadores-legenda-valor {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  font-variant-numeric: tabular-nums;
+}
+
+.indicadores-legenda-valor small {
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+@media (max-width: 1000px) {
+  .indicadores-linha {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* Celular: datas lado a lado e botão "Aplicar" ocupando a linha inteira */
+@media (max-width: 600px) {
+  .indicadores-filtro,
+  .indicadores-datas {
+    width: 100%;
+  }
+
+  .indicadores-datas {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .indicadores-campo-data input {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .indicadores-datas .sale-primary-button {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  /* Largura mínima evita nomes quebrados palavra a palavra;
+     a tabela rola na horizontal, como as demais grids */
+  .indicadores-tabela {
+    min-width: 560px;
+  }
+}

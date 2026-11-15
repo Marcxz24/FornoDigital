@@ -20,6 +20,7 @@ export interface Venda {
   subtotal: number;
   desconto: number;
   total: number;
+  formaPagamento: number;
   dataCriacao: string;
 }
 
@@ -39,4 +40,11 @@ export interface RegistrarVendaRequest {
   clienteId: string | null;
   itens: ItemVendaRequest[];
   desconto: number;
+  formaPagamento: FormaPagamentoCodigo;
 }
+
+/**
+ * Códigos de forma de pagamento aceitos pela API.
+ * 1 = Dinheiro, 2 = Cartão, 3 = PIX.
+ */
+export type FormaPagamentoCodigo = 1 | 2 | 3;

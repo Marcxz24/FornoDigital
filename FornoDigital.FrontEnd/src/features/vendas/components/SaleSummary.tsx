@@ -1,5 +1,7 @@
 import type { Cliente } from "../../clientes/types/cliente";
 import { formatCurrency } from "../../../shared/utils/formatCurrency";
+import type { FormaPagamentoCodigo } from "../types/venda";
+import { opcoesFormaPagamento } from "../../../shared/utils/formaPagamento";
 
 interface SaleSummaryProps {
   clientes: Cliente[];
@@ -15,6 +17,8 @@ interface SaleSummaryProps {
   registrando: boolean;
   submitDesabilitado: boolean;
   onCancel: () => void;
+  formaPagamento: FormaPagamentoCodigo | "";
+  onFormaPagamentoChange: (forma: FormaPagamentoCodigo | "") => void;
 }
 
 const quantityFormatter = new Intl.NumberFormat("pt-BR", {
@@ -35,6 +39,8 @@ export function SaleSummary({
   registrando,
   submitDesabilitado,
   onCancel,
+  formaPagamento,
+  onFormaPagamentoChange,
 }: SaleSummaryProps) {
   return (
     <aside className="panel sale-summary-panel" aria-labelledby="sale-summary-title">
@@ -84,6 +90,29 @@ export function SaleSummary({
             value={desconto}
             onChange={(event) => onDescontoChange(event.target.value)}
           />
+        </label>
+
+        <label className="sale-summary-field" htmlFor="sale-payment">
+          Forma de pagamento
+          <select
+            id="sale-payment"
+            value={formaPagamento}
+            onChange={(event) =>
+              onFormaPagamentoChange(
+                event.target.value
+                  ? (Number(event.target.value) as FormaPagamentoCodigo)
+                  : "",
+              )
+            }
+            disabled={registrando}
+          >
+            <option value="">Selecione</option>
+            {opcoesFormaPagamento.map((opcao) => (
+              <option key={opcao.valor} value={opcao.valor}>
+                {opcao.rotulo}
+              </option>
+            ))}
+          </select>
         </label>
 
         <dl className="sale-summary-totals">

@@ -1,6 +1,7 @@
 import { EmptyState } from "../../../shared/components/EmptyState";
 import { formatCurrency } from "../../../shared/utils/formatCurrency";
 import type { Venda } from "../types/venda";
+import { formatFormaPagamento } from "../../../shared/utils/formaPagamento";
 
 interface SaleDetailsProps {
   venda: Venda | null;
@@ -54,6 +55,10 @@ export function SaleDetails({ venda }: SaleDetailsProps) {
             <div>
               <dt>Desconto</dt>
               <dd>{formatCurrency(venda.desconto)}</dd>
+            </div>
+            <div>
+              <dt>Pagamento</dt>
+              <dd>{formatFormaPagamento(venda.formaPagamento)}</dd>
             </div>
             <div className="sale-total">
               <dt>Total</dt>

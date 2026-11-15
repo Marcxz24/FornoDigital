@@ -1,7 +1,19 @@
+import { lazy, Suspense } from "react";
+import { LoadingState } from "../../../shared/components/LoadingState";
 import { ClientList } from "../components/ClientList";
 import { ProductList } from "../components/ProductList";
 import { SummaryCards } from "../components/SummaryCards";
 import { useDashboardData } from "../hooks/useDashboardData";
+
+/**
+ * Gráficos de vendas carregados sob demanda, para que a biblioteca de gráficos
+ * não atrase a exibição dos cards e das listas.
+ */
+const IndicadoresDashboard = lazy(() =>
+  import("../../indicadores/components/IndicadoresDashboard").then((modulo) => ({
+    default: modulo.IndicadoresDashboard,
+  })),
+);
 
 /**
  * Define os temas visuais suportados no dashboard.
@@ -50,7 +62,7 @@ export function DashboardPage({
           <p className="eyebrow">FornoDigital</p>
           <h1>Visão Geral</h1>
           <p className="dashboard-subtitle">
-            Um resumo dos seus clientes e produtos.
+            Um resumo dos seus clientes, produtos e vendas.
           </p>
         </div>
         <button
@@ -79,6 +91,11 @@ export function DashboardPage({
           null
         }
       />
+
+      {/* Gráficos de vendas dos últimos 30 dias */}
+      <Suspense fallback={<LoadingState message="Carregando gráficos de vendas..." />}>
+        <IndicadoresDashboard />
+      </Suspense>
 
       {/* Seções contendo as listas detalhadas de clientes e produtos */}
       <div className="dashboard-sections">

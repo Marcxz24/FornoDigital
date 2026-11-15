@@ -14,6 +14,7 @@ O frontend é responsável pela experiência visual e pela interação com o usu
 | TypeScript 6 | Tipagem estática e segurança durante o desenvolvimento |
 | Vite 8 | Servidor de desenvolvimento e build |
 | SweetAlert2 11 | Notificações, alertas e confirmações |
+| Recharts 3 | Gráficos da tela de indicadores |
 | CSS3 | Estilização e responsividade |
 | ESLint | Análise estática e padronização do código |
 
@@ -211,8 +212,60 @@ Responsabilidades:
 
 - Apresentar o painel principal.
 - Exibir informações resumidas.
+- Exibir os gráficos de vendas dos últimos 30 dias (componente `IndicadoresDashboard`, da feature de indicadores).
 - Organizar a navegação lateral.
 - Apresentar informações de clientes e produtos.
+
+#### Indicadores
+
+`src/features/indicadores/`
+
+Responsável pela tela de análise de vendas com gráficos e indicadores.
+
+Estrutura:
+
+```text
+indicadores/
+├── components/
+│   ├── estiloGraficos.ts
+│   ├── FiltroPeriodo.tsx
+│   ├── GraficoFormasPagamento.tsx
+│   ├── GraficoFormasPagamentoBarras.tsx
+│   ├── GraficoVendasDiarias.tsx
+│   ├── IndicadoresDashboard.tsx
+│   ├── RankingProdutos.tsx
+│   └── ResumoIndicadores.tsx
+│
+├── hooks/
+│   └── useIndicadoresVendas.ts
+│
+├── pages/
+│   └── IndicadoresPage.tsx
+│
+├── styles/
+│   └── indicadores.css
+│
+├── types/
+│   └── indicadores.ts
+│
+└── utils/
+    ├── coresGraficos.ts
+    └── periodo.ts
+```
+
+Responsabilidades:
+
+- Filtrar os indicadores por período (atalhos ou datas).
+- Apresentar o resumo do período: quantidade de vendas, faturamento, ticket médio e produto mais vendido.
+- Exibir o ranking dos produtos mais vendidos por faturamento.
+- Exibir o gráfico de pizza do faturamento por forma de pagamento.
+- Exibir o gráfico de linhas do faturamento diário dos produtos mais vendidos.
+
+Os valores são calculados pela API; o frontend apenas apresenta os resultados.
+
+A página é carregada sob demanda (`React.lazy`), para que a biblioteca de gráficos só seja baixada quando a tela for aberta.
+
+O componente `IndicadoresDashboard` exibe na Visão geral, abaixo dos cards de resumo, os gráficos de barras dos produtos mais vendidos e do faturamento por forma de pagamento dos últimos 30 dias. Ele também é carregado sob demanda pelo `DashboardPage`.
 
 #### Produtos
 
@@ -308,6 +361,7 @@ Estrutura:
 api/
 ├── httpClient.ts
 ├── clientesApi.ts
+├── indicadoresApi.ts
 ├── produtosApi.ts
 └── vendasApi.ts
 ```
@@ -342,6 +396,10 @@ Caso não esteja definida, a aplicação utiliza:
 #### clientesApi.ts
 
 Centraliza as chamadas HTTP relacionadas aos clientes.
+
+#### indicadoresApi.ts
+
+Centraliza as chamadas HTTP relacionadas aos indicadores de vendas.
 
 #### produtosApi.ts
 

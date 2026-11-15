@@ -9,6 +9,7 @@ import { ProductSearch } from "./ProductSearch";
 import { SaleCart, type ItemCarrinho } from "./SaleCart";
 import { SaleSummary } from "./SaleSummary";
 import type {
+  FormaPagamentoCodigo,
   RegistrarVendaRequest,
   Venda,
 } from "../types/venda";
@@ -45,6 +46,7 @@ export function NewSaleForm({
   const [clienteId, setClienteId] = useState("");
   const [itensCarrinho, setItensCarrinho] = useState<ItemCarrinho[]>([]);
   const [desconto, setDesconto] = useState("0");
+  const [formaPagamento, setFormaPagamento] = useState<FormaPagamentoCodigo | "">("");
   const submissaoEmAndamento = useRef(false);
 
   const produtosDisponiveis = produtos.filter(
@@ -168,6 +170,11 @@ export function NewSaleForm({
       return;
     }
 
+    if (formaPagamento === "") {
+      void notificar("warning", "Selecione a forma de pagamento.");
+      return;
+    }
+
     const itens: RegistrarVendaRequest["itens"] = [];
 
     for (const item of itensCarrinho) {
@@ -202,6 +209,7 @@ export function NewSaleForm({
       clienteId: clienteId || null,
       itens,
       desconto: descontoNumerico,
+      formaPagamento,
     };
 
     submissaoEmAndamento.current = true;
@@ -212,6 +220,7 @@ export function NewSaleForm({
       setClienteId("");
       setItensCarrinho([]);
       setDesconto("0");
+      setFormaPagamento("");
 
       onSuccess(vendaRegistrada);
     } catch {
@@ -270,6 +279,8 @@ export function NewSaleForm({
           produtosDisponiveis.length === 0
         }
         onCancel={onCancel}
+        formaPagamento={formaPagamento}
+        onFormaPagamentoChange={setFormaPagamento}
       />
     </form>
   );

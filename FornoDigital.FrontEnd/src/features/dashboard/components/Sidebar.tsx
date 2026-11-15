@@ -7,7 +7,8 @@ export type AppPage =
   | "cadastrar-cliente"
   | "listar-clientes"
   | "cadastrar-produto"
-  | "listar-produtos";
+  | "listar-produtos"
+  | "indicadores";
 
 interface SidebarProps {
   paginaAtiva: AppPage;
@@ -46,6 +47,19 @@ const navigationItems: NavigationItem[] = [
       </svg>
     ),
     active: true,
+  },
+  {
+    label: "Indicadores",
+    href: "#indicadores",
+    page: "indicadores",
+    icon: (
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M4 20V4" />
+        <path d="M4 20h16" />
+        <path d="m7 15 4-4 3 3 5-6" />
+      </svg>
+    ),
+    active: false,
   },
   {
     label: "Vendas",

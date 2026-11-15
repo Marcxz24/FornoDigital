@@ -1,5 +1,6 @@
 import type { Cliente } from "../../clientes/types/cliente";
 import type { Venda } from "../types/venda";
+import { formatFormaPagamento } from "../../../shared/utils/formaPagamento";
 import { EmptyState } from "../../../shared/components/EmptyState";
 import { ErrorState } from "../../../shared/components/ErrorState";
 import { LoadingState } from "../../../shared/components/LoadingState";
@@ -100,6 +101,10 @@ export function SalesList({
                   <div>
                     <dt>Desconto</dt>
                     <dd>{formatCurrency(venda.desconto)}</dd>
+                  </div>
+                  <div>
+                    <dt>Pagamento</dt>
+                    <dd>{formatFormaPagamento(venda.formaPagamento)}</dd>
                   </div>
                   <div>
                     <dt>Total</dt>

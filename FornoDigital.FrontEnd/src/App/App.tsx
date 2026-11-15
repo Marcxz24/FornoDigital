@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import {
   Sidebar,
   type AppPage,
@@ -8,7 +8,18 @@ import { VendasPage } from "../features/vendas/pages/VendasPage";
 import { ClientesPage } from "../features/clientes/pages/ClientesPage";
 import { CadastrarProdutoPage } from "../features/produtos/pages/CadastrarProdutoPage";
 import { ListarProdutosPage } from "../features/produtos/pages/ListarProdutosPage";
+import { LoadingState } from "../shared/components/LoadingState";
 import "../styles/global.css";
+
+/**
+ * A tela de indicadores (e a biblioteca de gráficos) só é baixada
+ * quando a pessoa abre a tela, mantendo o carregamento inicial leve.
+ */
+const IndicadoresPage = lazy(() =>
+  import("../features/indicadores/pages/IndicadoresPage").then((modulo) => ({
+    default: modulo.IndicadoresPage,
+  })),
+);
 
 /**
  * Define os temas visuais disponíveis para a aplicação.
@@ -60,6 +71,13 @@ export default function App() {
           theme={theme}
           onToggleTheme={toggleTheme}
         />
+      ) : paginaAtiva === "indicadores" ? (
+        <Suspense fallback={<LoadingState message="Carregando indicadores..." />}>
+          <IndicadoresPage
+            theme={theme}
+            onToggleTheme={toggleTheme}
+          />
+        </Suspense>
       ) : paginaAtiva === "registrar-venda" ||
         paginaAtiva === "visualizar-vendas" ? (
         <VendasPage
