@@ -83,6 +83,11 @@ namespace FornoDigitalInfrastructure.Configurations.Produtos
             // Ignora a propriedade calculada de domínio para que o EF Core não tente mapeá-la como coluna na tabela
             builder.Ignore(produto => produto.TemEstoque);
 
+            // Índice composto usado pela listagem paginada: atende a ordenação padrão
+            // (Nome, com Id como desempate) sem ordenar a tabela inteira em memória.
+            builder.HasIndex(produto => new { produto.Nome, produto.Id })
+                .HasDatabaseName("IX_Produtos_Nome_Id");
+
             // Mapeia os códigos de barras em uma tabela própria pertencente ao Produto.
             builder.OwnsMany<CodigoBarrasProduto>(
             produto => produto.CodigosBarras,

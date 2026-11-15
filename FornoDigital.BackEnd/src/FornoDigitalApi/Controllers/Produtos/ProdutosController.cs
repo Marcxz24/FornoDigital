@@ -1,8 +1,11 @@
-﻿using FornoDigitalApi.Contracts.Produtos;
+﻿using FornoDigitalApi.Contracts.Comum;
+using FornoDigitalApi.Contracts.Produtos;
+using FornoDigitalApplication.Common.Paginacao;
 using FornoDigitalApplication.Produtos.CadastrarProduto;
 using FornoDigitalApplication.Produtos.AlterarDisponibilidadeProduto;
 using FornoDigitalApplication.Produtos.EditarProduto;
 using FornoDigitalApplication.Produtos.ListarProdutos;
+using FornoDigitalApplication.Produtos.ListarProdutosPaginado;
 using FornoDigitalApplication.Produtos.RemoverCodigoBarrasProduto;
 using FornoDigitalDomain.Entities.Produtos;
 using Microsoft.AspNetCore.Mvc;
@@ -21,6 +24,27 @@ namespace FornoDigitalApi.Controllers.Produtos
         private readonly EditarProdutoHandler _editarProdutoHandler;
         private readonly AlterarDisponibilidadeProdutoHandler _alterarDisponibilidadeProdutoHandler;
         private readonly RemoverCodigoBarrasProdutoHandler _removerCodigoBarrasProdutoHandler;
+        private readonly ListarProdutosPaginadoHandler _listarProdutosPaginadoHandler;
+
+        // Valores aceitos no parâmetro filtro da listagem paginada.
+        // Os nomes correspondem aos filtros já existentes no frontend.
+        private static readonly IReadOnlyDictionary<string, FiltroProduto> FiltrosPermitidos =
+            new Dictionary<string, FiltroProduto>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["todos"] = FiltroProduto.Todos,
+                ["disponiveis"] = FiltroProduto.Disponiveis,
+                ["indisponiveis"] = FiltroProduto.Indisponiveis,
+                ["estoque-zerado"] = FiltroProduto.EstoqueZerado
+            };
+
+        // Campos aceitos no parâmetro sortBy da listagem paginada.
+        private static readonly IReadOnlyDictionary<string, OrdenacaoProduto> OrdenacoesPermitidas =
+            new Dictionary<string, OrdenacaoProduto>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["nome"] = OrdenacaoProduto.Nome,
+                ["preco"] = OrdenacaoProduto.Preco,
+                ["dataCriacao"] = OrdenacaoProduto.DataCriacao
+            };
 
         /// <summary>
         /// Inicializa uma nova instância da classe <see cref="ProdutosController"/> injetando as dependências necessárias.
@@ -30,18 +54,21 @@ namespace FornoDigitalApi.Controllers.Produtos
         /// <param name="editarProdutoHandler">Manipulador responsável por processar o caso de uso de edição de produtos.</param>
         /// <param name="alterarDisponibilidadeProdutoHandler">Manipulador responsável por processar o caso de uso de alteração de disponibilidade de produtos.</param>
         /// <param name="removerCodigoBarrasProdutoHandler">Manipulador responsável por processar o caso de uso de remoção de códigos de barras de produtos.</param>
+        /// <param name="listarProdutosPaginadoHandler">Manipulador responsável por processar o caso de uso de listagem paginada de produtos.</param>
         public ProdutosController(
             CadastrarProdutoHandler cadastrarProdutoHandler,
             ListarProdutosHandler listarProdutosHandler,
             EditarProdutoHandler editarProdutoHandler,
             AlterarDisponibilidadeProdutoHandler alterarDisponibilidadeProdutoHandler,
-            RemoverCodigoBarrasProdutoHandler removerCodigoBarrasProdutoHandler)
+            RemoverCodigoBarrasProdutoHandler removerCodigoBarrasProdutoHandler,
+            ListarProdutosPaginadoHandler listarProdutosPaginadoHandler)
         {
             _cadastrarProdutoHandler = cadastrarProdutoHandler;
             _listarProdutosHandler = listarProdutosHandler;
             _editarProdutoHandler = editarProdutoHandler;
             _alterarDisponibilidadeProdutoHandler = alterarDisponibilidadeProdutoHandler;
             _removerCodigoBarrasProdutoHandler = removerCodigoBarrasProdutoHandler;
+            _listarProdutosPaginadoHandler = listarProdutosPaginadoHandler;
         }
 
         /// <summary>
@@ -106,6 +133,108 @@ namespace FornoDigitalApi.Controllers.Produtos
             var response = produtos.Select(ParaResponse).ToList();
 
             return Ok(response);
+        }
+
+        /// <summary>
+        /// Lista os produtos de forma paginada, com busca, filtro de situação e ordenação.
+        /// </summary>
+        /// <remarks>
+        /// A busca procura o termo no nome, na descrição e nos códigos de barras do produto.
+        /// Busca, filtro, ordenação e paginação são executados no banco de dados.
+        ///
+        /// Exemplo: <c>GET /api/produtos?page=1&amp;pageSize=50&amp;search=pão&amp;filtro=disponiveis</c>
+        /// </remarks>
+        /// <param name="page">Página desejada, iniciando em 1. Padrão: 1.</param>
+        /// <param name="pageSize">Registros por página, entre 1 e 100. Padrão: 50.</param>
+        /// <param name="search">Termo de busca opcional, com até 100 caracteres.</param>
+        /// <param name="filtro">
+        /// Situação: <c>todos</c> (padrão), <c>disponiveis</c>, <c>indisponiveis</c> ou <c>estoque-zerado</c>.
+        /// </param>
+        /// <param name="sortBy">Campo de ordenação: <c>nome</c> (padrão), <c>preco</c> ou <c>dataCriacao</c>.</param>
+        /// <param name="sortDirection">Direção: <c>asc</c> (padrão) ou <c>desc</c>.</param>
+        /// <param name="cancellationToken">Cancelado quando o cliente HTTP abandona a requisição.</param>
+        /// <response code="200">Página de produtos.</response>
+        /// <response code="400">Parâmetros de paginação, busca, filtro ou ordenação inválidos.</response>
+        [HttpGet]
+        [ProducesResponseType(typeof(ResultadoPaginadoResponse<ProdutoResponse>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<ResultadoPaginadoResponse<ProdutoResponse>>> ListarProdutosPaginado(
+            [FromQuery] int page = ParametrosPaginacao.PaginaPadrao,
+            [FromQuery] int pageSize = ParametrosPaginacao.TamanhoPaginaPadrao,
+            [FromQuery] string? search = null,
+            [FromQuery] string? filtro = null,
+            [FromQuery] string? sortBy = null,
+            [FromQuery] string? sortDirection = null,
+            CancellationToken cancellationToken = default)
+        {
+            if (!ConversorParametrosConsulta.TentarConverterOpcao(
+                    filtro, FiltrosPermitidos, FiltroProduto.Todos, out var filtroProduto))
+            {
+                ModelState.AddModelError(
+                    nameof(filtro),
+                    "Filtro inválido. Use todos, disponiveis, indisponiveis ou estoque-zerado.");
+            }
+
+            if (!ConversorParametrosConsulta.TentarConverterOpcao(
+                    sortBy, OrdenacoesPermitidas, OrdenacaoProduto.Nome, out var ordenarPor))
+            {
+                ModelState.AddModelError(
+                    nameof(sortBy),
+                    "Ordenação inválida. Use nome, preco ou dataCriacao.");
+            }
+
+            if (!ConversorParametrosConsulta.TentarConverterDirecao(sortDirection, out var direcao))
+            {
+                ModelState.AddModelError(
+                    nameof(sortDirection),
+                    "Direção inválida. Use asc ou desc.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return ValidationProblem(ModelState);
+            }
+
+            try
+            {
+                var query = new ListarProdutosPaginadoQuery(
+                    Page: page,
+                    PageSize: pageSize,
+                    Busca: search,
+                    Filtro: filtroProduto,
+                    OrdenarPor: ordenarPor,
+                    Direcao: direcao);
+
+                var resultado = await _listarProdutosPaginadoHandler.ListarAsync(query, cancellationToken);
+
+                var response = new ResultadoPaginadoResponse<ProdutoResponse>(
+                    Items: resultado.Items
+                        .Select(produto => new ProdutoResponse(
+                            Id: produto.Id,
+                            Nome: produto.Nome,
+                            Descricao: produto.Descricao,
+                            Preco: produto.Preco,
+                            Disponivel: produto.Disponivel,
+                            UnidadeMedida: produto.UnidadeMedida,
+                            ControlaEstoque: produto.ControlaEstoque,
+                            QuantidadeEstoque: produto.QuantidadeEstoque,
+                            TemEstoque: produto.TemEstoque,
+                            CodigosBarras: produto.CodigosBarras,
+                            DataCriacao: produto.DataCriacao,
+                            DataAtualizacao: produto.DataAtualizacao))
+                        .ToList(),
+                    Page: resultado.Page,
+                    PageSize: resultado.PageSize,
+                    TotalCount: resultado.TotalCount,
+                    TotalPages: resultado.TotalPages);
+
+                return Ok(response);
+            }
+            catch (ArgumentException exception)
+            {
+                ModelState.AddModelError(exception.ParamName ?? "consulta", exception.Message);
+                return ValidationProblem(ModelState);
+            }
         }
 
         /// <summary>

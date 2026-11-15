@@ -4,10 +4,12 @@ using FornoDigitalApplication.Clientes.CadastrarCliente;
 using FornoDigitalApplication.Clientes.EditarCliente;
 using FornoDigitalApplication.Clientes.ExcluirCliente;
 using FornoDigitalApplication.Clientes.ListarCliente;
+using FornoDigitalApplication.Clientes.ListarClientesPaginado;
 using FornoDigitalApplication.Produtos.AlterarDisponibilidadeProduto;
 using FornoDigitalApplication.Produtos.CadastrarProduto;
 using FornoDigitalApplication.Produtos.EditarProduto;
 using FornoDigitalApplication.Produtos.ListarProdutos;
+using FornoDigitalApplication.Produtos.ListarProdutosPaginado;
 using FornoDigitalApplication.Produtos.RemoverCodigoBarrasProduto;
 using FornoDigitalApplication.Vendas.ListarVendas;
 using FornoDigitalApplication.Vendas.ObterVenda;
@@ -59,6 +61,8 @@ builder.Services.AddScoped<CadastrarClienteHandler>();
 builder.Services.AddScoped<EditarClienteHandler>();
 builder.Services.AddScoped<ExcluirClienteHandler>();
 builder.Services.AddScoped<ListarClientesHandler>();
+builder.Services.AddScoped<IClienteConsultaRepository, ClienteConsultaRepository>();
+builder.Services.AddScoped<ListarClientesPaginadoHandler>();
 
 // -- Representa todos os serviços relacionados à entidade Produto.
 builder.Services.AddScoped<IProdutoRepository, ProdutoRepository>();
@@ -67,6 +71,8 @@ builder.Services.AddScoped<ListarProdutosHandler>();
 builder.Services.AddScoped<EditarProdutoHandler>();
 builder.Services.AddScoped<AlterarDisponibilidadeProdutoHandler>();
 builder.Services.AddScoped<RemoverCodigoBarrasProdutoHandler>();
+builder.Services.AddScoped<IProdutoConsultaRepository, ProdutoConsultaRepository>();
+builder.Services.AddScoped<ListarProdutosPaginadoHandler>();
 
 // -- Representa todos os serviços relacionados à entidade Venda
 builder.Services.AddScoped<IVendaRepository, VendaRepository>();

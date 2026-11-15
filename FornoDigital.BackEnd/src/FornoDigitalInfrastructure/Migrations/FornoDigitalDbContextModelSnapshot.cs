@@ -83,6 +83,9 @@ namespace FornoDigitalInfrastructure.Migrations
                     b.HasIndex("Cpf")
                         .HasDatabaseName("IX_Clientes_Cpf");
 
+                    b.HasIndex("Nome", "Id")
+                        .HasDatabaseName("IX_Clientes_Nome_Id");
+
                     b.ToTable("Clientes", (string)null);
                 });
 
@@ -133,6 +136,9 @@ namespace FornoDigitalInfrastructure.Migrations
                         .HasColumnName("Unidade_Medida");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Nome", "Id")
+                        .HasDatabaseName("IX_Produtos_Nome_Id");
 
                     b.ToTable("Produtos", (string)null);
                 });

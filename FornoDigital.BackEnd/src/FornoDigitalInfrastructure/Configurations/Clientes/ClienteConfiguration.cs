@@ -98,6 +98,11 @@ namespace FornoDigitalInfrastructure.Configurations.Clientes
             // Cria um índice no banco de dados para acelerar buscas e consultas por CPF.
             builder.HasIndex(cliente => cliente.Cpf)
                 .HasDatabaseName("IX_Clientes_Cpf");
+
+            // Índice composto usado pela listagem paginada: atende a ordenação padrão
+            // (Nome, com Id como desempate) sem ordenar a tabela inteira em memória.
+            builder.HasIndex(cliente => new { cliente.Nome, cliente.Id })
+                .HasDatabaseName("IX_Clientes_Nome_Id");
         }
     }
 }
