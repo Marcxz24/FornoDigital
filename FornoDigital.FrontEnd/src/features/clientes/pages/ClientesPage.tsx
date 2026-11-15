@@ -134,7 +134,15 @@ export function ClientesPage({
   return (
     <main className="page-content clients-page">
       <header className="page-header clients-page-header">
-        <div>
+        <div className="brand-mark" aria-hidden="true">
+          <img
+            className="brand-mark-image"
+            src="/branding/forno-digital-icon.png"
+            alt=""
+          />
+        </div>
+
+        <div className="dashboard-heading">
           <p className="client-eyebrow">Relacionamento</p>
           <h1>Clientes</h1>
           <p className="page-subtitle">
@@ -142,14 +150,16 @@ export function ClientesPage({
           </p>
         </div>
 
-        <button
-          className="client-primary-button"
-          type="button"
-          onClick={abrirCadastro}
-        >
-          <span aria-hidden="true">+</span>
-          Cadastrar cliente
-        </button>
+        {paginaAtiva === "listar-clientes" && modoFormulario === "fechado" && (
+          <button
+            className="client-primary-button"
+            type="button"
+            onClick={abrirCadastro}
+          >
+            <span aria-hidden="true">+</span>
+            Cadastrar cliente
+          </button>
+        )}
       </header>
 
       {modoFormulario !== "fechado" && (
@@ -187,14 +197,16 @@ export function ClientesPage({
         </section>
       )}
 
-      <ListaClientes
-        clientes={estadoClientes.data}
-        carregando={estadoClientes.loading}
-        erro={estadoClientes.error}
-        onEditar={abrirEdicao}
-        onExcluir={solicitarExclusao}
-        onRecarregar={recarregar}
-      />
+      {paginaAtiva === "listar-clientes" && modoFormulario === "fechado" && (
+        <ListaClientes
+          clientes={estadoClientes.data}
+          carregando={estadoClientes.loading}
+          erro={estadoClientes.error}
+          onEditar={abrirEdicao}
+          onExcluir={solicitarExclusao}
+          onRecarregar={recarregar}
+        />
+      )}
     </main>
   );
 }

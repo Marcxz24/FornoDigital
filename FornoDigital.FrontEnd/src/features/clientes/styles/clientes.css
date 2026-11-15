@@ -14,7 +14,14 @@
 }
 
 .clients-page-header {
+  display: flex;
   align-items: center;
+  gap: 15px;
+}
+
+.clients-page-header > .client-primary-button {
+  flex: 0 0 auto;
+  margin-left: auto;
 }
 
 .client-eyebrow {
@@ -514,15 +521,17 @@
 }
 
 @media (max-width: 600px) {
-  .clients-page-header,
-  .client-form-panel > .client-section-heading,
-  .client-section-heading {
-    align-items: flex-start;
-    flex-direction: column;
+  .clients-page-header {
+    display: grid;
+    grid-template-columns: 48px minmax(0, 1fr);
+    align-items: center;
+    column-gap: 12px;
+    row-gap: 14px;
   }
 
   .clients-page-header > .client-primary-button {
     width: 100%;
+    margin-left: 0;
   }
 
   .client-form-grid,
@@ -546,4 +555,21 @@
     .clients-page {
     padding: 24px 14px 36px;
   }
+
+  .clients-page-header > .brand-mark {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.clients-page-header > .dashboard-heading {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+}
+
+.clients-page-header > .client-primary-button {
+  grid-column: 1 / -1;
+  width: 100%;
+  margin-left: 0;
+}
 }

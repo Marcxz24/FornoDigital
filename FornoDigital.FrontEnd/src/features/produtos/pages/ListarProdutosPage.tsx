@@ -65,7 +65,11 @@ export function ListarProdutosPage({
     <main className="dashboard products-page">
       <header className="dashboard-header">
         <div className="brand-mark" aria-hidden="true">
-          <span>F</span>
+          <img
+            className="brand-mark-image"
+            src="/branding/forno-digital-icon.png"
+            alt=""
+          />
         </div>
 
         <div className="dashboard-heading">

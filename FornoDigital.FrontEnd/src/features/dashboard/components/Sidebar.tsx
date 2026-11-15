@@ -133,9 +133,12 @@ export function Sidebar({ paginaAtiva, onNavigate }: SidebarProps) {
   return (
     <aside className="sidebar" aria-label="Navegação principal">
       <a className="sidebar-brand" href="#" aria-label="Forno Digital, início">
-        <span className="sidebar-brand-mark" aria-hidden="true">
-          F
-        </span>
+        <img
+          className="sidebar-brand-logo"
+          src="/branding/forno-digital-icon.png"
+          alt=""
+          aria-hidden="true"
+        />
         <span className="sidebar-brand-name">Forno Digital</span>
       </a>
 
@@ -181,9 +184,9 @@ export function Sidebar({ paginaAtiva, onNavigate }: SidebarProps) {
                   onClick={
                     item.page
                       ? (event) => {
-                          event.preventDefault();
-                          onNavigate(item.page!);
-                        }
+                        event.preventDefault();
+                        onNavigate(item.page!);
+                      }
                       : undefined
                   }
                 >

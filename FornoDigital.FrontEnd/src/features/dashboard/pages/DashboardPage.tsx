@@ -23,9 +23,9 @@ interface DashboardPageProps {
  * incluindo cartões de resumo estatístico e as listagens de clientes e produtos.
  */
 export function DashboardPage({
-    theme,
-    onToggleTheme,
-  }: DashboardPageProps) {
+  theme,
+  onToggleTheme,
+}: DashboardPageProps) {
   // Obtém os dados consolidados de clientes e produtos através do hook personalizado
   const { clientes, produtos } = useDashboardData();
 
@@ -40,7 +40,11 @@ export function DashboardPage({
       {/* Cabeçalho da página contendo a marca, títulos e botão de alternância de tema */}
       <header className="dashboard-header">
         <div className="brand-mark" aria-hidden="true">
-          <span>F</span>
+          <img
+            className="brand-mark-image"
+            src="/branding/forno-digital-icon.png"
+            alt=""
+          />
         </div>
         <div className="dashboard-heading">
           <p className="eyebrow">FornoDigital</p>
